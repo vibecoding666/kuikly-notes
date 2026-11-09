@@ -1,0 +1,102 @@
+Activity Resolver Table:
+  Non-Data Actions:
+      android.intent.action.MAIN:
+        29d1fb3 com.example.kuiklynotes/.MainActivity filter 4013970
+          Action: "android.intent.action.MAIN"
+          Category: "android.intent.category.LAUNCHER"
+
+Domain verification status:
+
+Permissions:
+  Permission [com.example.kuiklynotes.permission.KUIKLY_NOTIFY] (74b6677):
+    sourcePackage=com.example.kuiklynotes
+    uid=10174 gids=[] type=0 prot=signature
+    perm=PermissionInfo{b5d12e4 com.example.kuiklynotes.permission.KUIKLY_NOTIFY}
+
+Key Set Manager:
+  [com.example.kuiklynotes]
+      Signing KeySets: 53
+
+Packages:
+  Package [com.example.kuiklynotes] (d4a7950):
+    userId=10174
+    pkg=Package{d8c3749 com.example.kuiklynotes}
+    codePath=/data/app/~~PiU4K9Qk68NIgJzmqunSaQ==/com.example.kuiklynotes-N7HoMhJuyrif04bix4AVYg==
+    resourcePath=/data/app/~~PiU4K9Qk68NIgJzmqunSaQ==/com.example.kuiklynotes-N7HoMhJuyrif04bix4AVYg==
+    legacyNativeLibraryDir=/data/app/~~PiU4K9Qk68NIgJzmqunSaQ==/com.example.kuiklynotes-N7HoMhJuyrif04bix4AVYg==/lib
+    extractNativeLibs=true
+    primaryCpuAbi=null
+    secondaryCpuAbi=null
+    cpuAbiOverride=null
+    versionCode=1 minSdk=21 targetSdk=34
+    minExtensionVersions=[]
+    versionName=1.0
+    usesNonSdkApi=false
+    splits=[base]
+    apkSigningVersion=2
+    flags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]
+    privateFlags=[ PRIVATE_FLAG_ACTIVITIES_RESIZE_MODE_RESIZEABLE_VIA_SDK_VERSION ALLOW_AUDIO_PLAYBACK_CAPTURE PRIVATE_FLAG_ALLOW_NATIVE_HEAP_POINTER_TAGGING ]
+    forceQueryable=false
+    dataDir=/data/user/0/com.example.kuiklynotes
+    supportsScreens=[small, medium, large, xlarge, resizeable, anyDensity]
+    timeStamp=2026-11-09 15:18:30
+    lastUpdateTime=2026-11-09 15:18:34
+    packageSource=0
+    signatures=PackageSignatures{b00c326 version:2, signatures:[10823499], past signatures:[]}
+    installPermissionsFixed=false
+    pkgFlags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]
+    declared permissions:
+      com.example.kuiklynotes.permission.KUIKLY_NOTIFY: prot=signature, INSTALLED
+    requested permissions:
+      com.example.kuiklynotes.permission.KUIKLY_NOTIFY
+    install permissions:
+      com.example.kuiklynotes.permission.KUIKLY_NOTIFY: granted=true
+    User 0: ceDataInode=131339 installed=true hidden=false suspended=false distractionFlags=0 stopped=false notLaunched=false enabled=0 instant=false virtual=false
+      installReason=0
+      firstInstallTime=2026-11-09 15:18:34
+      uninstallReason=0
+      overlay paths:
+        /product/overlay/NavigationBarModeGestural/NavigationBarModeGesturalOverlay.apk
+        /data/resource-cache/com.android.systemui-neutral-DUIb.frro
+        /data/resource-cache/com.android.systemui-accent-QBur.frro
+      legacy overlay paths:
+        /product/overlay/NavigationBarModeGestural/NavigationBarModeGesturalOverlay.apk
+      runtime permissions:
+
+Queries:
+  system apps queryable: false
+  queries via forceQueryable:
+  queries via package name:
+  queries via component:
+    com.google.android.settings.intelligence:
+      com.example.kuiklynotes
+  queryable via interaction:
+    User 0:
+      [com.android.server.telecom,com.android.keychain,com.android.emulator.multidisplay,com.android.localtransport,android,com.android.inputdevices,com.android.providers.settings,com.android.location.fused,com.android.dynsystem,com.android.wallpaperbackup,com.android.settings]:
+        com.example.kuiklynotes
+      com.google.android.inputmethod.latin:
+        com.example.kuiklynotes
+  queryable via uses-library:
+
+Dexopt state:
+  [com.example.kuiklynotes]
+    path: /data/app/~~PiU4K9Qk68NIgJzmqunSaQ==/com.example.kuiklynotes-N7HoMhJuyrif04bix4AVYg==/base.apk
+      x86_64: [status=verify] [reason=install]
+  BgDexopt state:
+    enabled:true
+    mDexOptThread:null
+    mDexOptCancellingThread:null
+    mFinishedPostBootUpdate:false
+    mLastExecutionStatus:0
+    mLastExecutionStartTimeMs:0
+    mLastExecutionDurationIncludingSleepMs:0
+    mLastExecutionStartUptimeMs:0
+    mLastExecutionDurationMs:0
+    now:64862
+    mLastCancelledPackages:
+    mFailedPackageNamesPrimary:
+    mFailedPackageNamesSecondary:
+
+Compiler stats:
+  [com.example.kuiklynotes]
+     base.apk - 1193

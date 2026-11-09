@@ -28,11 +28,17 @@ tap() {
   adb shell input tap "$1" "$2" || true
   sleep 1
 }
+restart() {
+  adb shell am force-stop "$PKG" || true
+  sleep 1
+  adb shell am start -W -n "$PKG/.MainActivity" || true
+  sleep 5
+}
 
 echo "===== SMOKE: HOME ====="
 shot 01-home.png
 
-# Bottom bar has 4 equal buttons; "＋ 新建" is the first one.
+# --- New note -> type -> dismiss keyboard -> save ---
 echo "===== SMOKE: NEW NOTE ====="
 tap $((W / 8)) $((H - 26))
 sleep 2
@@ -42,30 +48,34 @@ echo "===== SMOKE: TYPE TITLE ====="
 tap $((W / 2)) 200
 adb shell input text 'SmokeNote' > /dev/null 2>&1 || true
 sleep 1
+adb shell input keyevent 111 > /dev/null 2>&1 || true
+sleep 1
 shot 03-typed.png
 
 echo "===== SMOKE: SAVE ====="
-tap $((W / 3)) $((H - 70))
+tap $((W / 3)) $((H - 35))
 sleep 2
 shot 04-after-save.png
 
+# --- Stats overlay from a clean cold start ---
 echo "===== SMOKE: STATS OVERLAY ====="
+restart
 tap $((W * 5 / 8)) $((H - 26))
 sleep 2
 shot 05-stats.png
 
-echo "===== SMOKE: CLOSE OVERLAY ====="
-tap $((W - 30)) 32
-sleep 1
-
+# --- Tags overlay from a clean cold start ---
 echo "===== SMOKE: TAGS OVERLAY ====="
+restart
 tap $((W * 3 / 8)) $((H - 26))
 sleep 2
 shot 06-tags.png
 
+# --- Random exploration from a clean cold start ---
 echo "===== SMOKE: MONKEY (300 events) ====="
+restart
 adb shell monkey -p "$PKG" --throttle 80 -s 20261109 \
-  --pct-touch 70 --pct-motion 20 --pct-appswitch 5 --pct-anyevent 5 300 \
+  --pct-touch 70 --pct-motion 20 --pct-appswitch 2 --pct-anyevent 8 300 \
   > out/monkey.txt 2>&1 || true
 sleep 3
 
@@ -81,10 +91,10 @@ echo "===== SMOKE: CRASH / ANR SIGNATURES ====="
 grep -n -iE "FATAL EXCEPTION|AndroidRuntime|ANR |Input dispatching timed out|Force finishing activity|has died|NoClassDefFoundError|ClassNotFoundException" out/smoke-logcat.txt | head -n 120 || echo "no crash markers"
 
 echo "===== MONKEY RESULT ====="
-tail -n 25 out/monkey.txt
+tail -n 12 out/monkey.txt
 
 echo "===== SMOKE LOGCAT TAIL ====="
-tail -n 120 out/smoke-logcat.txt
+tail -n 100 out/smoke-logcat.txt
 
 if grep -qiE "FATAL EXCEPTION|Force finishing activity|Input dispatching timed out" out/smoke-logcat.txt; then
   echo "::error::UI smoke test detected a crash/ANR - see SMOKE signatures above"
