@@ -488,7 +488,7 @@ internal class NotesPage : Pager() {
 
                             Input {
                                 attr {
-                                    height(40f); marginTop(10f); padding(left = 10f, right = 10f)
+                                    height(40f); marginTop(10f)
                                     borderRadius(8f); backgroundColor(CARD)
                                     text(ctx.initialTitle)
                                     placeholder("标题（留空保留原标题）")
@@ -498,7 +498,7 @@ internal class NotesPage : Pager() {
                             }
                             TextArea {
                                 attr {
-                                    height(120f); marginTop(8f); padding(10f)
+                                    height(120f); marginTop(8f)
                                     borderRadius(8f); backgroundColor(CARD)
                                     placeholder("正文（留空保留原正文）")
                                     fontSize(14f); color(INK)
@@ -507,7 +507,7 @@ internal class NotesPage : Pager() {
                             }
                             Input {
                                 attr {
-                                    height(38f); marginTop(8f); padding(left = 10f, right = 10f)
+                                    height(38f); marginTop(8f)
                                     borderRadius(8f); backgroundColor(CARD)
                                     text(ctx.initialTags)
                                     placeholder("标签，用逗号分隔（留空保留）")
@@ -595,7 +595,7 @@ internal class NotesPage : Pager() {
                                 attr { flexDirectionRow(); height(40f); marginTop(4f) }
                                 Input {
                                     attr {
-                                        flex(1f); height(36f); padding(left = 10f, right = 10f)
+                                        flex(1f); height(36f)
                                         borderRadius(8f); backgroundColor(CARD)
                                         placeholder("添加待办项"); fontSize(12f); color(INK)
                                     }
@@ -713,7 +713,7 @@ internal class NotesPage : Pager() {
                             }
                             Input {
                                 attr {
-                                    height(40f); marginTop(6f); padding(left = 10f, right = 10f)
+                                    height(40f); marginTop(6f)
                                     borderRadius(8f); backgroundColor(CARD)
                                     placeholder("在此粘贴 JSON"); fontSize(11f); color(INK)
                                 }
