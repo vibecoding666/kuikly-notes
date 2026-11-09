@@ -4,7 +4,7 @@
 
 ### 产物
 
-- `kuikly-notes-release.apk` — **1,306,727 字节（约 1.25 MiB）**，远低于 5 MB 上限
+- `kuikly-notes-release.apk` — **1,306,731 字节（约 1.25 MiB）**，远低于 5 MB 上限
 - 由 `:androidApp:assembleRelease` 产出，已用 CI 生成的 release keystore 签名（证书 `CN=KuiklyNotes`）
 - APK 结构完整：`classes.dex`、`AndroidManifest.xml`、`resources.arsc`、`META-INF/CERT.RSA`
 
