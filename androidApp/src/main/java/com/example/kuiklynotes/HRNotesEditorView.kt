@@ -8,6 +8,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.util.TypedValue
+import android.view.Gravity
 import android.widget.EditText
 import com.tencent.kuikly.core.render.android.export.IKuiklyRenderViewExport
 import com.tencent.kuikly.core.render.android.export.KuiklyRenderCallback
@@ -44,7 +45,14 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
         setLineSpacing(0f, 1.35f)
         hint = "正文"
         isFocusableInTouchMode = true
-        setTextIsSelectable(true)
+        // Text must start at the top-left of the editor, not float in the middle.
+        // EditText inside a wrap-content container is vertically centred by default.
+        gravity = Gravity.TOP or Gravity.START
+        setHorizontallyScrolling(false)
+        // Never grow/shrink away from the space Kuikly gave us.
+        minimumHeight = 0
+        minimumWidth = 0
+        includeFontPadding = false
         applyColors()
 
         addTextChangedListener(object : TextWatcher {
@@ -66,6 +74,18 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
 
     private fun fireMeta(length: Int) {
         metaCallback?.invoke(mapOf("length" to length, "editedAt" to System.currentTimeMillis()))
+    }
+
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        // Fill the space Kuikly allocated instead of wrapping to the content,
+        // which would leave the body floating in the middle of the screen.
+        val w = MeasureSpec.getSize(widthMeasureSpec)
+        val h = MeasureSpec.getSize(heightMeasureSpec)
+        if (w > 0 && h > 0) {
+            setMeasuredDimension(w, h)
+        } else {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        }
     }
 
     override fun setProp(propKey: String, propValue: Any): Boolean {

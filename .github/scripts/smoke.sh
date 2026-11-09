@@ -61,6 +61,19 @@ else
 fi
 shot 03-typed.png
 
+echo "===== SMOKE: EDITOR THREE-DOT MENU ====="
+adb logcat -c || true
+tap $((W * 93 / 100)) $((H * 5 / 100))
+sleep 1
+tap $((W * 95 / 100)) $((H * 4 / 100))
+sleep 2
+if wait_log "MARK menuOpen=true" 10; then
+  echo "OK: editor three-dot menu opened"
+else
+  echo "FAIL: editor three-dot menu did not open"
+fi
+shot 04-editor-menu.png
+
 echo "===== SMOKE: BACK TO LIST ====="
 tap $((W * 8 / 100)) $((H * 8 / 100))
 sleep 2
@@ -74,7 +87,7 @@ if wait_log "MARK editorClose" 12; then
 else
   echo "FAIL: editor did not close (back key missed)"
 fi
-shot 04-back.png
+shot 05-back.png
 
 echo "===== SMOKE: TODO TAB (via intent, deterministic) ====="
 adb shell am force-stop "$PKG" || true
@@ -87,7 +100,7 @@ if wait_log "MARK tab=1" 15; then
 else
   echo "FAIL: todo tab not selected"
 fi
-shot 05-todo.png
+shot 06-todo.png
 
 echo "===== SMOKE: NOTES TAB (via intent, deterministic) ====="
 adb shell am force-stop "$PKG" || true
@@ -96,7 +109,7 @@ adb logcat -c || true
 adb shell am start -W -n "$PKG/.MainActivity" --ei tab 0 || true
 sleep 4
 wait_log "MARK tab=0" 12 || true
-shot 06-notes.png
+shot 07-notes.png
 
 echo "===== SMOKE: 500K STRESS SAMPLE (intent hook) ====="
 adb shell am force-stop "$PKG" || true
@@ -110,13 +123,13 @@ else
   echo "FAIL: stress request not received"
 fi
 sleep 6
-shot 07-stress.png
+shot 08-stress.png
 
 echo "===== SMOKE: TYPE INTO 500K DOCUMENT ====="
 tap $((W / 2)) $((H * 55 / 100))
 adb shell input text 'X' > /dev/null 2>&1 || true
 sleep 3
-shot 08-stress-typed.png
+shot 09-stress-typed.png
 
 echo "===== SMOKE: MONKEY (200 events) ====="
 adb shell am force-stop "$PKG" || true
@@ -127,7 +140,7 @@ adb shell monkey -p "$PKG" --throttle 80 -s 20261110 \
   --pct-touch 70 --pct-motion 20 --pct-appswitch 2 --pct-anyevent 8 200 \
   > out/monkey.txt 2>&1 || true
 sleep 3
-shot 09-final.png
+shot 10-final.png
 
 echo "===== SMOKE: CAPTURE ====="
 adb logcat -d -b crash -b main -v time > "$LOG" 2>&1 || true

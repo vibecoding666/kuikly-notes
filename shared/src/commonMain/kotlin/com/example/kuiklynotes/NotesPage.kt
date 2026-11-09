@@ -13,6 +13,7 @@ import com.tencent.kuikly.core.pager.Pager
 import com.tencent.kuikly.core.reactive.collection.ObservableList
 import com.tencent.kuikly.core.reactive.handler.observable
 import com.tencent.kuikly.core.reactive.handler.observableList
+import com.tencent.kuikly.core.timer.setTimeout
 import com.tencent.kuikly.core.views.Input
 import com.tencent.kuikly.core.views.List
 import com.tencent.kuikly.core.views.Text
@@ -36,7 +37,7 @@ internal class GridRow(val left: NoteCard?, val right: NoteCard?)
 internal class NoteCard(
     val id: String, val title: String, val summary: String, val meta: String,
     val color: Long, val pinned: Boolean, val starred: Boolean,
-    val trashed: Boolean, val done: Boolean,
+    val trashed: Boolean, val done: Boolean, val pendingDelete: Boolean = false,
 )
 
 @Page("NotesPage")
@@ -79,6 +80,13 @@ internal class NotesPage : Pager() {
     private var screenEditor: ObservableList<String> by observableList()
     private var menuSlot: ObservableList<String> by observableList()
     private var todoSlot: ObservableList<String> by observableList()
+    private val pendingDeleteIds = mutableSetOf<String>()
+    private var undoVisible by observable(false)
+    private var undoId by observable("")
+    private var undoLabel by observable("")
+    private var pendingMetaLength = 0
+    private var pendingMetaAt = 0L
+    private var metaSaveScheduled = false
 
     init {
         repo.load()
@@ -126,6 +134,7 @@ internal class NotesPage : Pager() {
         meta = (if (tags.isEmpty()) "" else tags.joinToString("  #", prefix = "#") + "   ") + timeText(updatedAt),
         color = NoteColors.palette[NoteColors.normalized(color)],
         pinned = pinned, starred = starred, trashed = deleted, done = done,
+        pendingDelete = pendingDeleteIds.contains(id),
     )
 
     private fun timeText(t: Long): String {
@@ -140,6 +149,47 @@ internal class NotesPage : Pager() {
     }
 
     private fun say(t: String) { banner = t }
+
+    /**
+     * Two-step delete: the first tap arms the button, the second tap actually
+     * deletes. This prevents accidental deletions from a stray tap.
+     */
+    private fun onDeleteTap(c: NoteCard) {
+        if (c.trashed) {
+            repo.purge(c.id)
+            pendingDeleteIds.remove(c.id)
+            refresh()
+            say("已彻底删除")
+            return
+        }
+        if (!pendingDeleteIds.contains(c.id)) {
+            pendingDeleteIds.add(c.id)
+            refresh()
+            say("再点一次确认删除")
+            KLog.d(TAG, "MARK deleteArmed id=${c.id}")
+            setTimeout(3000) {
+                pendingDeleteIds.remove(c.id)
+                refresh()
+            }
+            return
+        }
+        pendingDeleteIds.remove(c.id)
+        repo.softDelete(c.id)
+        undoId = c.id
+        undoLabel = c.title
+        undoVisible = true
+        refresh()
+        say("已移入回收站")
+        KLog.d(TAG, "MARK deleted id=${c.id}")
+        setTimeout(5000) { undoVisible = false }
+    }
+
+    private fun undoDelete() {
+        if (undoId.isNotEmpty()) repo.restore(undoId)
+        undoVisible = false
+        refresh()
+        say("已撤销")
+    }
 
     private fun openEditor(id: String) {
         val n = repo.find(id) ?: return
@@ -159,6 +209,11 @@ internal class NotesPage : Pager() {
 
     private fun closeEditor() {
         editorRef?.view?.flush()
+        // Flush any pending debounced metadata update now.
+        if (metaSaveScheduled) {
+            metaSaveScheduled = false
+            repo.updateBodyMeta(editingId, pendingMetaLength, pendingMetaAt)
+        }
         val n = repo.find(editingId)
         if (n != null) {
             val title = editTitle.ifBlank { titleValue }
@@ -200,18 +255,34 @@ internal class NotesPage : Pager() {
         countText = "$length 字"
         editedText = "刚刚"
         KLog.d(TAG, "MARK meta length=$length")
-        repo.updateBodyMeta(editingId, length, editedAt)
+        // Debounce metadata persistence: typing must not hit disk on every keystroke.
+        pendingMetaLength = length
+        pendingMetaAt = editedAt
+        metaSaveScheduled = true
+        setTimeout(800) {
+            if (!metaSaveScheduled) return@setTimeout
+            metaSaveScheduled = false
+            repo.updateBodyMeta(editingId, pendingMetaLength, pendingMetaAt)
+        }
     }
 
     private fun switchTab(i: Int) {
         tab = i
         folderIdx = 0
         tagFilter = NoteRepository.ALL_TAG
+        // The todo group is rebuilt only when the tab changes, so scrolling
+        // position and item identity are preserved across refreshes.
+        todoSlot.clear()
+        if (i == 1) todoSlot.add("todo")
         KLog.d(TAG, "MARK tab=$i")
         refresh()
     }
 
-    private fun toggleMenu() { menuOpen = !menuOpen; syncSlots() }
+    private fun toggleMenu() {
+        menuOpen = !menuOpen
+        KLog.d(TAG, "MARK menuOpen=$menuOpen screen=$screen")
+        syncSlots()
+    }
 
     private fun onMenuItem(label: String) {
         menuOpen = false
@@ -222,7 +293,23 @@ internal class NotesPage : Pager() {
             "归档" -> { repo.toggleArchive(editingId); refresh(); say("已切换归档") }
             "复制" -> { repo.duplicate(editingId); refresh(); say("已创建副本") }
             "深色模式" -> { dark = !dark; say("已切换主题") }
-            "删除" -> { repo.softDelete(editingId); closeEditor(); say("已移入回收站") }
+            "删除" -> {
+                // Same two-step guard as the card button.
+                if (!pendingDeleteIds.contains(editingId)) {
+                    pendingDeleteIds.add(editingId)
+                    say("再点一次确认删除")
+                    setTimeout(3000) { pendingDeleteIds.remove(editingId) }
+                } else {
+                    pendingDeleteIds.remove(editingId)
+                    repo.softDelete(editingId)
+                    undoId = editingId
+                    undoLabel = repo.find(editingId)?.title ?: "便签"
+                    undoVisible = true
+                    closeEditor()
+                    say("已移入回收站")
+                    setTimeout(5000) { undoVisible = false }
+                }
+            }
             "压测样张（50 万字）" -> {
                 val n = repo.createStressNote(500_000)
                 openEditor(n.id)
@@ -235,8 +322,8 @@ internal class NotesPage : Pager() {
     private fun syncSlots() {
         screenList.clear(); screenEditor.clear(); menuSlot.clear()
         if (screen == "list") screenList.add("list") else screenEditor.add("editor")
-        if (menuOpen && screen == "list") menuSlot.add("menu")
-        if (todoSlot.isEmpty()) todoSlot.add("todo")
+        // The three-dot menu must work on BOTH the list screen and the editor.
+        if (menuOpen) menuSlot.add("menu")
     }
 
     companion object {
@@ -369,6 +456,31 @@ internal class NotesPage : Pager() {
                         }
                     }
 
+                    // Undo bar: offers a 5 second window to bring a note back.
+                    if (ctx.undoVisible) {
+                        View {
+                            attr {
+                                absolutePosition(bottom = 74f, left = 24f, right = 24f)
+                                height(44f); borderRadius(14f)
+                                backgroundColor(INK)
+                                padding(left = 14f, right = 10f)
+                                flexDirectionRow()
+                                allCenter()
+                            }
+                            Text {
+                                attr {
+                                    text("已移入回收站 · ${ctx.undoLabel}")
+                                    fontSize(12f); color(PAPER); flex(1f)
+                                }
+                            }
+                            View {
+                                attr { height(30f); padding(left = 10f, right = 10f); borderRadius(9f); backgroundColor(Color(0x33FFFFFFL)); allCenter() }
+                                event { click { ctx.undoDelete() } }
+                                Text { attr { text("撤销"); fontSize(12f); color(PAPER) } }
+                            }
+                        }
+                    }
+
                     View {
                         attr {
                             absolutePosition(bottom = 82f, right = 18f)
@@ -488,37 +600,45 @@ internal class NotesPage : Pager() {
                         borderRadius(14f)
                         padding(6f)
                     }
-                    vfor({ ctx.folderLabels }) { label ->
-                        View {
-                            attr { height(30f); padding(left = 10f, right = 10f); allCenter() }
-                            event {
-                                click {
-                                    ctx.folderIdx = ctx.folderLabels.indexOf(label)
-                                    ctx.menuOpen = false; ctx.syncSlots(); ctx.refresh()
-                                    ctx.say("筛选：$label")
+                    if (ctx.screen == "list") {
+                        vfor({ ctx.folderLabels }) { label ->
+                            View {
+                                attr { height(30f); padding(left = 10f, right = 10f); allCenter() }
+                                event {
+                                    click {
+                                        ctx.folderIdx = ctx.folderLabels.indexOf(label)
+                                        ctx.menuOpen = false; ctx.syncSlots(); ctx.refresh()
+                                        ctx.say("筛选：$label")
+                                    }
                                 }
+                                Text { attr { text("视图 · $label"); fontSize(11f); color(if (ctx.dark) DARK_INK2 else INK2) } }
                             }
-                            Text { attr { text("视图 · $label"); fontSize(11f); color(if (ctx.dark) DARK_INK2 else INK2) } }
                         }
-                    }
-                    vfor({ ctx.sortLabels }) { label ->
-                        View {
-                            attr { height(30f); padding(left = 10f, right = 10f); allCenter() }
-                            event {
-                                click {
-                                    ctx.sortIdx = ctx.sortLabels.indexOf(label)
-                                    ctx.menuOpen = false; ctx.syncSlots(); ctx.refresh()
-                                    ctx.say("排序：$label")
+                        vfor({ ctx.sortLabels }) { label ->
+                            View {
+                                attr { height(30f); padding(left = 10f, right = 10f); allCenter() }
+                                event {
+                                    click {
+                                        ctx.sortIdx = ctx.sortLabels.indexOf(label)
+                                        ctx.menuOpen = false; ctx.syncSlots(); ctx.refresh()
+                                        ctx.say("排序：$label")
+                                    }
                                 }
+                                Text { attr { text("排序 · $label"); fontSize(11f); color(if (ctx.dark) DARK_INK2 else INK2) } }
                             }
-                            Text { attr { text("排序 · $label"); fontSize(11f); color(if (ctx.dark) DARK_INK2 else INK2) } }
                         }
-                    }
-                    vfor({ ctx.menuLabels }) { label ->
                         View {
                             attr { height(30f); padding(left = 10f, right = 10f); allCenter() }
-                            event { click { ctx.onMenuItem(label) } }
-                            Text { attr { text(label); fontSize(11f); color(ACCENT) } }
+                            event { click { ctx.dark = !ctx.dark; ctx.menuOpen = false; ctx.syncSlots(); ctx.say("已切换主题") } }
+                            Text { attr { text("深色模式"); fontSize(11f); color(ACCENT) } }
+                        }
+                    } else {
+                        vfor({ ctx.menuLabels }) { label ->
+                            View {
+                                attr { height(30f); padding(left = 10f, right = 10f); allCenter() }
+                                event { click { ctx.onMenuItem(label) } }
+                                Text { attr { text(label); fontSize(11f); color(ACCENT) } }
+                            }
                         }
                     }
                 }
@@ -562,15 +682,30 @@ internal class NotesPage : Pager() {
                 View {
                     attr { flexDirectionRow(); marginTop(7f); allCenter() }
                     Text { attr { text(c.meta); fontSize(9f); color(MUTED); flex(1f) } }
-                    View {
-                        attr { size(26f, 24f); borderRadius(8f); backgroundColor(ACCENT_SOFT); allCenter() }
-                        event {
-                            click {
-                                if (c.trashed) ctx.repo.restore(c.id) else ctx.repo.softDelete(c.id)
-                                ctx.refresh(); ctx.say(if (c.trashed) "已恢复" else "已移入回收站")
-                            }
+                    if (c.trashed) {
+                        View {
+                            attr { size(30f, 26f); borderRadius(9f); backgroundColor(ACCENT_SOFT); allCenter() }
+                            event { click { ctx.repo.restore(c.id); ctx.refresh(); ctx.say("已恢复") } }
+                            Text { attr { text("↺"); fontSize(13f); color(ACCENT) } }
                         }
-                        Text { attr { text(if (c.trashed) "↺" else "×"); fontSize(12f); color(if (c.trashed) ACCENT else DANGER) } }
+                        View {
+                            attr { size(30f, 26f); marginLeft(6f); borderRadius(9f); backgroundColor(ACCENT_SOFT); allCenter() }
+                            event { click { ctx.repo.purge(c.id); ctx.refresh(); ctx.say("已彻底删除") } }
+                            Text { attr { text("✕"); fontSize(12f); color(DANGER) } }
+                        }
+                    } else if (c.pendingDelete) {
+                        // Armed: the second tap is what actually deletes.
+                        View {
+                            attr { height(26f); padding(left = 8f, right = 8f); borderRadius(9f); backgroundColor(DANGER); allCenter() }
+                            event { click { ctx.onDeleteTap(c) } }
+                            Text { attr { text("确定删除"); fontSize(10f); color(PAPER) } }
+                        }
+                    } else {
+                        View {
+                            attr { size(30f, 26f); borderRadius(9f); backgroundColor(ACCENT_SOFT); allCenter() }
+                            event { click { ctx.onDeleteTap(c) } }
+                            Text { attr { text("×"); fontSize(13f); color(MUTED) } }
+                        }
                     }
                 }
             }
