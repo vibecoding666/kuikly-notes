@@ -5,6 +5,8 @@ import com.example.kuiklynotes.Note.Companion.KIND_TODO
 import com.tencent.kuikly.core.annotations.Page
 import com.tencent.kuikly.core.base.Color
 import com.tencent.kuikly.core.base.ViewBuilder
+import com.tencent.kuikly.core.base.ViewContainer
+import com.tencent.kuikly.core.base.ViewRef
 import com.tencent.kuikly.core.directives.vfor
 import com.tencent.kuikly.core.pager.Pager
 import com.tencent.kuikly.core.reactive.collection.ObservableList
@@ -65,7 +67,7 @@ internal class NotesPage : Pager() {
 
     private var editingId: String = ""
     private var editTitle: String = ""
-    private var editorRef: NativeEditorView? = null
+    private var editorRef: ViewRef<NativeEditorView>? = null
 
     private val tabLabels: ObservableList<String> by observableList()
     private val folderLabels: ObservableList<String> by observableList()
@@ -167,7 +169,7 @@ internal class NotesPage : Pager() {
     }
 
     private fun closeEditor() {
-        editorRef?.flush()
+        editorRef?.view?.flush()
         screen = "list"
         syncSlots()
         refresh()
@@ -476,6 +478,7 @@ internal class NotesPage : Pager() {
                                 click {
                                     ctx.folderIdx = ctx.folderLabels.indexOf(label)
                                     ctx.menuOpen = false
+                                    ctx.syncSlots()
                                     ctx.refresh()
                                     ctx.say("筛选：${label}")
                                 }
@@ -490,6 +493,7 @@ internal class NotesPage : Pager() {
                                 click {
                                     ctx.sortIdx = ctx.sortLabels.indexOf(label)
                                     ctx.menuOpen = false
+                                    ctx.syncSlots()
                                     ctx.refresh()
                                     ctx.say("排序：${label}")
                                 }
@@ -499,7 +503,7 @@ internal class NotesPage : Pager() {
                     }
                     View {
                         attr { height(32f); padding(left = 10f, right = 10f); allCenter() }
-                        event { click { ctx.dark = !ctx.dark; ctx.menuOpen = false; ctx.say("已切换主题") } }
+                        event { click { ctx.dark = !ctx.dark; ctx.menuOpen = false; ctx.syncSlots(); ctx.say("已切换主题") } }
                         Text { attr { text("深色模式"); fontSize(11f); color(ACCENT) } }
                     }
                 }
@@ -590,8 +594,7 @@ internal class NotesPage : Pager() {
             View {
                 attr {
                     size(19f, 19f); borderRadius(7f)
-                    backgroundColor(if (c.done) ACCENT else Color(0x00000000L))
-                    borderWidth(1.6f); borderColor(if (c.done) ACCENT else MUTED)
+                    backgroundColor(if (c.done) ACCENT else ACCENT_SOFT)
                     allCenter()
                 }
                 if (c.done) { Text { attr { text("✓"); fontSize(11f); color(PAPER) } } }
