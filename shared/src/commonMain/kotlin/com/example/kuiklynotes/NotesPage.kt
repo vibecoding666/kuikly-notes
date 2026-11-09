@@ -273,7 +273,7 @@ internal class NotesPage : Pager() {
                                 if (row.left != null) {
                                     View {
                                         attr { flex(1f); marginRight(5f) }
-                                        ctx.card(row.left)
+                                        card(row.left)
                                     }
                                 } else {
                                     View { attr { flex(1f); marginRight(5f) } }
@@ -281,7 +281,7 @@ internal class NotesPage : Pager() {
                                 if (row.right != null) {
                                     View {
                                         attr { flex(1f); marginLeft(5f) }
-                                        ctx.card(row.right)
+                                        card(row.right)
                                     }
                                 } else {
                                     View { attr { flex(1f); marginLeft(5f) } }
@@ -301,7 +301,7 @@ internal class NotesPage : Pager() {
                                 }
                             }
                             vfor({ ctx.todoOpen }) { c ->
-                                ctx.todoRow(c)
+                                todoRow(c)
                             }
                             Text {
                                 attr {
@@ -311,7 +311,7 @@ internal class NotesPage : Pager() {
                                 }
                             }
                             vfor({ ctx.todoDone }) { c ->
-                                ctx.todoRow(c)
+                                todoRow(c)
                             }
                         }
                     }

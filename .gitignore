@@ -12,3 +12,4 @@ tmp/
 diag*/
 classes.dex
 smoke*/
+build-errors.log
