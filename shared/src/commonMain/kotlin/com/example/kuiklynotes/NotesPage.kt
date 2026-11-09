@@ -189,6 +189,11 @@ internal class NotesPage : Pager() {
             KLog.d(TAG, "MARK closeEditorEvent")
             closeEditor()
         }
+        if (pagerEvent == "switchTab") {
+            val t = eventData.optInt("tab", 0)
+            KLog.d(TAG, "MARK switchTab=$t")
+            switchTab(t)
+        }
     }
 
     private fun onMeta(length: Int, editedAt: Long) {

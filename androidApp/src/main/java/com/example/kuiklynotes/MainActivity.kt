@@ -33,9 +33,11 @@ class MainActivity : Activity() {
         // creates a 500k-character note and opens the editor, so the smoke test does
         // not have to guess pixel coordinates.
         val stress = intent?.getIntExtra("stress", 0) ?: 0
-        if (stress > 0) {
+        val tabIdx = intent?.getIntExtra("tab", -1) ?: -1
+        if (stress > 0 || tabIdx >= 0) {
             container.postDelayed({
-                delegator?.sendEvent("stress", mapOf("chars" to stress))
+                if (stress > 0) delegator?.sendEvent("stress", mapOf("chars" to stress))
+                if (tabIdx >= 0) delegator?.sendEvent("switchTab", mapOf("tab" to tabIdx))
             }, 2500)
         }
     }

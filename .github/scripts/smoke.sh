@@ -76,20 +76,26 @@ else
 fi
 shot 04-back.png
 
-echo "===== SMOKE: TODO TAB ====="
-tap $((W * 72 / 100)) $((H * 90 / 100))
-sleep 2
-if wait_log "MARK tab=1" 12; then
+echo "===== SMOKE: TODO TAB (via intent, deterministic) ====="
+adb shell am force-stop "$PKG" || true
+sleep 1
+adb logcat -c || true
+adb shell am start -W -n "$PKG/.MainActivity" --ei tab 1 || true
+sleep 4
+if wait_log "MARK tab=1" 15; then
   echo "OK: todo tab selected"
 else
   echo "FAIL: todo tab not selected"
 fi
 shot 05-todo.png
 
-echo "===== SMOKE: NOTES TAB ====="
-tap $((W * 28 / 100)) $((H * 90 / 100))
-sleep 2
-wait_log "MARK tab=0" 8 || true
+echo "===== SMOKE: NOTES TAB (via intent, deterministic) ====="
+adb shell am force-stop "$PKG" || true
+sleep 1
+adb logcat -c || true
+adb shell am start -W -n "$PKG/.MainActivity" --ei tab 0 || true
+sleep 4
+wait_log "MARK tab=0" 12 || true
 shot 06-notes.png
 
 echo "===== SMOKE: 500K STRESS SAMPLE (intent hook) ====="
@@ -126,6 +132,8 @@ shot 09-final.png
 echo "===== SMOKE: CAPTURE ====="
 adb logcat -d -b crash -b main -v time > "$LOG" 2>&1 || true
 adb shell dumpsys activity activities > out/activities.txt 2>&1 || true
+adb shell uiautomator dump /sdcard/ui.xml > /dev/null 2>&1 || true
+adb pull /sdcard/ui.xml out/ui.xml > /dev/null 2>&1 || true
 
 echo "===== SMOKE: PROCESS ====="
 adb shell pidof "$PKG" || echo "PROCESS NOT RUNNING (crashed)"
