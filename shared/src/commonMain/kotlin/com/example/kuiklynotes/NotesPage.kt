@@ -80,7 +80,8 @@ internal class NotesPage : Pager() {
     private var screenEditor: ObservableList<String> by observableList()
     private var menuSlot: ObservableList<String> by observableList()
     private var todoSlot: ObservableList<String> by observableList()
-    private val pendingDeleteIds = mutableSetOf<String>()
+    private var pendingDeleteIds = mutableSetOf<String>()
+    private var suppressCardClickUntil = 0L
     private var undoVisible by observable(false)
     private var undoId by observable("")
     private var undoLabel by observable("")
@@ -155,6 +156,8 @@ internal class NotesPage : Pager() {
      * deletes. This prevents accidental deletions from a stray tap.
      */
     private fun onDeleteTap(c: NoteCard) {
+        // Guard against the tap bubbling up and also opening the editor.
+        suppressCardClickUntil = nowMillis() + 600
         if (c.trashed) {
             repo.purge(c.id)
             pendingDeleteIds.remove(c.id)
@@ -466,18 +469,20 @@ internal class NotesPage : Pager() {
 
                     Text {
                         attr {
-                            text(if (ctx.banner.isEmpty()) "" else "› " + ctx.banner)
+                            text(if (ctx.undoVisible || ctx.banner.isEmpty()) "" else "› " + ctx.banner)
                             fontSize(11f); color(ACCENT)
                             margin(left = 18f, right = 18f, top = 2f, bottom = 2f)
                         }
                     }
 
-                    // Undo bar: offers a 5 second window to bring a note back.
+                    // Undo bar: 5 seconds to bring a note back. Sits in the normal
+                    // flow right above the tab bar so the FAB never covers it.
                     if (ctx.undoVisible) {
                         View {
                             attr {
-                                absolutePosition(bottom = 74f, left = 24f, right = 24f)
-                                height(44f); borderRadius(14f)
+                                height(44f)
+                                margin(left = 20f, right = 20f, bottom = 8f)
+                                borderRadius(14f)
                                 backgroundColor(INK)
                                 padding(left = 14f, right = 10f)
                                 flexDirectionRow()
@@ -672,7 +677,12 @@ internal class NotesPage : Pager() {
                 backgroundColor(if (ctx.dark) DARK_CARD else PAPER)
                 padding(left = 12f, right = 10f, top = 12f, bottom = 10f)
             }
-            event { click { if (!c.trashed) ctx.openEditor(c.id) } }
+            event {
+                click {
+                    val blocked = nowMillis() < ctx.suppressCardClickUntil
+                    if (!blocked && !c.trashed) ctx.openEditor(c.id)
+                }
+            }
             View {
                 attr { flexDirectionRow() }
                 if (c.id != "__empty__") {
