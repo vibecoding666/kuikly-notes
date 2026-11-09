@@ -35,19 +35,10 @@ object KRRouterAdapter : IKRRouterAdapter {
 
 object KRImageAdapter : IKRImageAdapter {
     // The notes UI uses no network images, so a no-op loader is sufficient.
+    // The extra-params overload and shouldWaitViewDidLoad have default impls.
     override fun fetchDrawable(imageLoadOption: HRImageLoadOption, callback: (Drawable?) -> Unit) {
         callback(null)
     }
-
-    override fun fetchDrawable(
-        imageLoadOption: HRImageLoadOption,
-        extra: JSONObject,
-        callback: (Drawable?) -> Unit,
-    ) {
-        callback(null)
-    }
-
-    override val shouldWaitViewDidLoad: Boolean get() = false
 }
 
 object KRExceptionAdapter : IKRUncaughtExceptionHandlerAdapter {
