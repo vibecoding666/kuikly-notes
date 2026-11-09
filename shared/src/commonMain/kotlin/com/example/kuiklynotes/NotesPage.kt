@@ -75,6 +75,17 @@ internal class NotesPage : Pager() {
     private val menuLabels: ObservableList<String> by observableList()
     private val colorLabels: ObservableList<String> by observableList()
 
+    // ---------- conditional-render slots (0 or 1 item each) ----------
+
+    private var searchVisible by observable(false)
+    private var menuOpen by observable(false)
+    private var editorMenuOpen by observable(false)
+    private var screenList: ObservableList<String> by observableList()
+    private var screenEditor: ObservableList<String> by observableList()
+    private var listMenuList: ObservableList<String> by observableList()
+    private var editorMenuList: ObservableList<String> by observableList()
+    private var todoGroupOpen: ObservableList<String> by observableList()
+
     init {
         repo.load()
         listOf("笔记", "待办").forEach { tabLabels.add(it) }
@@ -711,17 +722,6 @@ if (c.id == "__empty__") {
         tagRows.add(NoteRepository.ALL_TAG)
         repo.allTags().forEach { tagRows.add(it.first) }
     }
-
-    // ---------- conditional-render slots (0 or 1 item each) ----------
-
-    private var searchVisible by observable(false)
-    private var menuOpen by observable(false)
-    private var editorMenuOpen by observable(false)
-    private var screenList: ObservableList<String> by observableList()
-    private var screenEditor: ObservableList<String> by observableList()
-    private var listMenuList: ObservableList<String> by observableList()
-    private var editorMenuList: ObservableList<String> by observableList()
-    private var todoGroupOpen: ObservableList<String> by observableList()
 
     // Slots are rebuilt whenever a screen/menu changes.
     private fun syncSlots() {
