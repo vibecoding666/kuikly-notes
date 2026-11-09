@@ -186,7 +186,7 @@ internal class NotesPage : Pager() {
         repo.updateBodyMeta(editingId, length, editedAt)
     }
 
-    private fun setTab(i: Int) {
+    private fun switchTab(i: Int) {
         tab = i
         folderIdx = 0
         tagFilter = NoteRepository.ALL_TAG
@@ -534,7 +534,7 @@ if (c.id == "__empty__") {
                                     backgroundColor(if (ctx.tabLabels.indexOf(label) == ctx.tab) (if (ctx.dark) Color(0xFF1D2127L) else PAPER) else Color(0x00000000L))
                                     allCenter()
                                 }
-                                event { click { ctx.setTab(ctx.tabLabels.indexOf(label)) } }
+                                event { click { ctx.switchTab(ctx.tabLabels.indexOf(label)) } }
                                 Text {
                                     attr {
                                         text(label); fontSize(13f)
