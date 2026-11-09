@@ -2,6 +2,7 @@ package com.example.kuiklynotes
 
 import android.app.Activity
 import android.os.Bundle
+import android.view.KeyEvent
 import android.widget.FrameLayout
 import com.tencent.kuikly.core.render.android.IKuiklyRenderExport
 import com.tencent.kuikly.core.render.android.expand.KuiklyRenderViewBaseDelegator
@@ -42,6 +43,18 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         delegator?.onResume()
+    }
+
+    /**
+     * When the full-screen editor is open, the system BACK key closes the editor
+     * instead of exiting the app.
+     */
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BACK && isEditorOpen()) {
+            delegator?.sendEvent("closeEditor", mapOf())
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun onPause() {

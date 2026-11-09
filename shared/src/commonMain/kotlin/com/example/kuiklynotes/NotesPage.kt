@@ -151,6 +151,7 @@ internal class NotesPage : Pager() {
         editedText = timeText(n.updatedAt)
         countText = "${n.length} 字"
         KLog.d(TAG, "MARK editorOpen id=$id")
+        setEditorOpen(true)
         screen = "editor"
         menuOpen = false
         syncSlots()
@@ -165,6 +166,7 @@ internal class NotesPage : Pager() {
         }
         screen = "list"
         KLog.d(TAG, "MARK editorClose")
+        setEditorOpen(false)
         syncSlots()
         refresh()
     }
@@ -182,6 +184,10 @@ internal class NotesPage : Pager() {
             KLog.d(TAG, "MARK stressRequest chars=$chars")
             val n = repo.createStressNote(chars)
             openEditor(n.id)
+        }
+        if (pagerEvent == "closeEditor") {
+            KLog.d(TAG, "MARK closeEditorEvent")
+            closeEditor()
         }
     }
 

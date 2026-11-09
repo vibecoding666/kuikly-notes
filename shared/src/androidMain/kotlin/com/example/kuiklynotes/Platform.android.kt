@@ -7,6 +7,12 @@ object AppHolder {
     var context: Context? = null
 }
 
+/** Cross-module flag so the host Activity can intercept the system BACK key. */
+object EditorState {
+    @Volatile
+    var open: Boolean = false
+}
+
 /**
  * Chunked on-disk body store. A 500k-character note is split into 32K-char
  * parts so no single read/write allocates a megabyte-sized string on the UI
@@ -108,3 +114,6 @@ actual fun bodyWriteSample(id: String, targetChars: Int) {
     }
     BodyFiles.writeMeta(id, index)
 }
+
+actual fun setEditorOpen(open: Boolean) { EditorState.open = open }
+actual fun isEditorOpen(): Boolean = EditorState.open

@@ -62,8 +62,13 @@ fi
 shot 03-typed.png
 
 echo "===== SMOKE: BACK TO LIST ====="
-tap $((W * 5 / 100)) $((H * 5 / 100))
+tap $((W * 8 / 100)) $((H * 8 / 100))
 sleep 2
+if ! wait_log "MARK editorClose" 6; then
+  echo "retry: system back key"
+  adb shell input keyevent KEYCODE_BACK || true
+  sleep 2
+fi
 if wait_log "MARK editorClose" 12; then
   echo "OK: editor closed"
 else
@@ -72,7 +77,7 @@ fi
 shot 04-back.png
 
 echo "===== SMOKE: TODO TAB ====="
-tap $((W * 72 / 100)) $((H * 94 / 100))
+tap $((W * 72 / 100)) $((H * 90 / 100))
 sleep 2
 if wait_log "MARK tab=1" 12; then
   echo "OK: todo tab selected"
@@ -82,7 +87,7 @@ fi
 shot 05-todo.png
 
 echo "===== SMOKE: NOTES TAB ====="
-tap $((W * 28 / 100)) $((H * 94 / 100))
+tap $((W * 28 / 100)) $((H * 90 / 100))
 sleep 2
 wait_log "MARK tab=0" 8 || true
 shot 06-notes.png

@@ -15,6 +15,10 @@ expect fun bodyCopy(srcId: String, dstId: String)
 /** Generate a synthetic body of ~targetChars characters (stress testing). */
 expect fun bodyWriteSample(id: String, targetChars: Int)
 
+/** Whether the full-screen editor is currently open (used by the host to intercept BACK). */
+expect fun setEditorOpen(open: Boolean)
+expect fun isEditorOpen(): Boolean
+
 data class CheckItem(var text: String = "", var done: Boolean = false)
 
 /**
