@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Sticky-note background -->
+    <path
+        android:fillColor="#FF3C6CBD"
+        android:pathData="M22,10 L86,10 A10,10 0 0,1 96,20 L96,88 A10,10 0 0,1 86,98 L22,98 A10,10 0 0,1 12,88 L12,20 A10,10 0 0,1 22,10 Z" />
+
+    <!-- Text lines -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M30,34 L78,34 L78,41 L30,41 Z M30,52 L78,52 L78,59 L30,59 Z M30,70 L62,70 L62,77 L30,77 Z" />
+
+</vector>

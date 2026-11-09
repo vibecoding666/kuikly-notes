@@ -53,4 +53,7 @@ dependencies {
     implementation(project(":shared"))
     implementation("com.tencent.kuikly-open:core:$kuiklyVersion")
     implementation("com.tencent.kuikly-open:core-render-android:$kuiklyVersion")
+    // Kuikly's renderer resolves RecyclerView reflectively at runtime; its AAR
+    // does not declare any androidx dependencies, so the host must provide them.
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
 }
