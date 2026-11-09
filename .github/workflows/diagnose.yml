@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/diagnose.yml'
       - '.github/scripts/diagnose.sh'
+      - '.github/scripts/smoke.sh'
 
 permissions:
   contents: read
@@ -70,7 +71,9 @@ jobs:
           arch: x86_64
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: sh .github/scripts/diagnose.sh
+          script: |
+            sh .github/scripts/diagnose.sh
+            sh .github/scripts/smoke.sh
 
       - name: Upload diagnostics
         if: always()
