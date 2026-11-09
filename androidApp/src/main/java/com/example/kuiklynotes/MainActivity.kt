@@ -34,10 +34,14 @@ class MainActivity : Activity() {
         // not have to guess pixel coordinates.
         val stress = intent?.getIntExtra("stress", 0) ?: 0
         val tabIdx = intent?.getIntExtra("tab", -1) ?: -1
-        if (stress > 0 || tabIdx >= 0) {
+        val openMenu = intent?.getIntExtra("menu", 0) ?: 0
+        val deleteTest = intent?.getStringExtra("delete_test")
+        if (stress > 0 || tabIdx >= 0 || openMenu > 0 || deleteTest != null) {
             container.postDelayed({
                 if (stress > 0) delegator?.sendEvent("stress", mapOf("chars" to stress))
                 if (tabIdx >= 0) delegator?.sendEvent("switchTab", mapOf("tab" to tabIdx))
+                if (openMenu > 0) delegator?.sendEvent("openMenu", mapOf())
+                if (deleteTest != null) delegator?.sendEvent("deleteTest", mapOf())
             }, 2500)
         }
     }

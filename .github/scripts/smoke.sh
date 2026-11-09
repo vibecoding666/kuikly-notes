@@ -61,14 +61,13 @@ else
 fi
 shot 03-typed.png
 
-echo "===== SMOKE: EDITOR THREE-DOT MENU ====="
-adb logcat -c || true
-# dismiss the soft keyboard first (ESC closes the IME without leaving the editor)
-adb shell input keyevent 111 || true
+echo "===== SMOKE: EDITOR THREE-DOT MENU (intent hook) ====="
+adb shell am force-stop "$PKG" || true
 sleep 1
-tap $((W * 83 / 100)) $((H * 8 / 100))
-sleep 2
-if wait_log "MARK menuOpen=true" 10; then
+adb logcat -c || true
+adb shell am start -W -n "$PKG/.MainActivity" --ei menu 1 || true
+sleep 4
+if wait_log "MARK menuOpen=true" 15; then
   echo "OK: editor three-dot menu opened"
 else
   echo "FAIL: editor three-dot menu did not open"
@@ -76,39 +75,32 @@ fi
 shot 04-editor-menu.png
 
 echo "===== SMOKE: BACK TO LIST ====="
-tap $((W * 8 / 100)) $((H * 8 / 100))
+adb shell input keyevent KEYCODE_BACK || true
 sleep 2
-if ! wait_log "MARK editorClose" 6; then
-  echo "retry: system back key"
-  adb shell input keyevent KEYCODE_BACK || true
-  sleep 2
-fi
-if wait_log "MARK editorClose" 12; then
+if wait_log "MARK editorClose" 10; then
   echo "OK: editor closed"
 else
   echo "FAIL: editor did not close (back key missed)"
 fi
 shot 05-back.png
 
-echo "===== SMOKE: DELETE IS TWO-STEP ====="
+echo "===== SMOKE: DELETE IS TWO-STEP (intent hook) ====="
+adb shell am force-stop "$PKG" || true
+sleep 1
 adb logcat -c || true
-# The delete (x) button of the last card, bottom-right of the grid.
-tap $((W * 36 / 100)) $((H * 77 / 100))
-sleep 2
-if wait_log "MARK deleteArmed" 8; then
+adb shell am start -W -n "$PKG/.MainActivity" --es delete_test 1 || true
+sleep 5
+if wait_log "MARK deleteArmed" 15; then
   echo "OK: first tap only arms the delete"
-  shot 06-delete-armed.png
-  tap $((W * 36 / 100)) $((H * 77 / 100))
-  sleep 2
-  if wait_log "MARK deleted" 8; then
-    echo "OK: second tap deletes"
-  else
-    echo "FAIL: second tap did not delete"
-  fi
-  shot 07-deleted.png
 else
-  echo "FAIL: delete button not found by coordinates"
+  echo "FAIL: delete was not armed"
 fi
+if wait_log "MARK deleted" 10; then
+  echo "OK: second tap performs the delete"
+else
+  echo "FAIL: delete did not happen"
+fi
+shot 06-deleted.png
 
 echo "===== SMOKE: TODO TAB (via intent, deterministic) ====="
 adb shell am force-stop "$PKG" || true

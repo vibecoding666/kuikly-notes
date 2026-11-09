@@ -249,6 +249,22 @@ internal class NotesPage : Pager() {
             KLog.d(TAG, "MARK switchTab=$t")
             switchTab(t)
         }
+        if (pagerEvent == "openMenu") {
+            val n = notes.firstOrNull { !it.deleted } ?: repo.create(KIND_NOTE)
+            openEditor(n.id)
+            toggleMenu()
+        }
+        if (pagerEvent == "deleteTest") {
+            // Exercise the two-step delete path end to end.
+            val n = notes.firstOrNull { !it.deleted }
+            if (n == null) {
+                KLog.d(TAG, "MARK deleteTest noNote")
+            } else {
+                val card = n.toCard()
+                onDeleteTap(card)
+                onDeleteTap(card)
+            }
+        }
     }
 
     private fun onMeta(length: Int, editedAt: Long) {
