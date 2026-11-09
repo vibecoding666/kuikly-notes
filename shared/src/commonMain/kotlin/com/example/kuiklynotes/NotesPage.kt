@@ -68,8 +68,19 @@ internal class NotesPage : Pager() {
     private var initialContent: String = ""
     private var initialTags: String = ""
 
+    private val folderLabels: ObservableList<String> by observableList()
+    private val sortLabels: ObservableList<String> by observableList()
+    private val toolLabels: ObservableList<String> by observableList()
+    private val colorLabels: ObservableList<String> by observableList()
+    private val toggleLabels: ObservableList<String> by observableList()
+
     init {
         repo.load()
+        listOf("全部", "收藏", "置顶", "归档", "回收站").forEach { folderLabels.add(it) }
+        listOf("最近", "创建", "标题", "置顶", "颜色").forEach { sortLabels.add(it) }
+        listOf("＋ 新建", "标签", "统计", "清空回收站").forEach { toolLabels.add(it) }
+        listOf("柠檬", "天蓝", "薄荷", "樱粉", "薰衣草", "纯白", "雾灰", "暖杏").forEach { colorLabels.add(it) }
+        listOf("置顶", "收藏", "归档", "复制").forEach { toggleLabels.add(it) }
         refresh()
     }
 
@@ -747,9 +758,5 @@ internal class NotesPage : Pager() {
         }
     }
 
-    private val folderLabels = listOf("全部", "收藏", "置顶", "归档", "回收站")
-    private val sortLabels = listOf("最近", "创建", "标题", "置顶", "颜色")
-    private val toolLabels = listOf("＋ 新建", "标签", "统计", "清空回收站")
-    private val colorLabels = listOf("柠檬", "天蓝", "薄荷", "樱粉", "薰衣草", "纯白", "雾灰", "暖杏")
-    private val toggleLabels = listOf("置顶", "收藏", "归档", "复制")
+
 }
