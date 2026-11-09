@@ -1,9 +1,8 @@
 package com.example.kuiklynotes
 
 /**
- * Tiny dependency-free JSON codec for the note list. Only the shapes used by
- * this app are supported, which keeps the APK small and avoids pulling in a
- * serialization runtime.
+ * Tiny dependency-free JSON codec for the note METADATA list.
+ * Note bodies are never serialized here (they live in native chunk files).
  */
 object JsonCodec {
 
@@ -15,7 +14,8 @@ object JsonCodec {
             sb.append('{')
             field(sb, "id", n.id)
             field(sb, "title", n.title)
-            field(sb, "content", n.content)
+            field(sb, "summary", n.summary)
+            sb.append("\"length\":").append(n.length).append(',')
             sb.append("\"tags\":")
             stringArray(sb, n.tags)
             sb.append(',')
@@ -35,7 +35,8 @@ object JsonCodec {
             sb.append("],")
             num(sb, "createdAt", n.createdAt)
             num(sb, "updatedAt", n.updatedAt)
-            num(sb, "reminderAt", n.reminderAt)
+            num(sb, "kind", n.kind.toLong())
+            bool(sb, "done", n.done)
             sb.append('}')
         }
         sb.append(']')
@@ -48,14 +49,12 @@ object JsonCodec {
         p.ws()
         if (p.peek() != '[') return result
         p.next()
-        p.ws()
         while (p.peek() != ']' && !p.end()) {
-            if (p.peek() == ',') { p.next(); p.ws(); continue }
             p.ws()
+            if (p.peek() == ',') { p.next(); continue }
             if (p.peek() != '{') break
             p.next()
-            val map = p.readObject()
-            result.add(fromMap(map))
+            result.add(fromMap(p.readObject()))
             p.ws()
         }
         return result
@@ -65,14 +64,14 @@ object JsonCodec {
         val tags = (m["tags"] as? List<*>)?.map { it.toString() }?.toMutableList() ?: mutableListOf()
         val checks = mutableListOf<CheckItem>()
         (m["checklist"] as? List<*>)?.forEach { raw ->
-            @Suppress("UNCHECKED_CAST")
             val cm = raw as? Map<String, Any?> ?: return@forEach
             checks.add(CheckItem(cm["text"].toString(), cm["done"] == true || cm["done"] == "true"))
         }
         return Note(
             id = m["id"].toString(),
             title = m["title"]?.toString() ?: "",
-            content = m["content"]?.toString() ?: "",
+            summary = m["summary"]?.toString() ?: "",
+            length = (m["length"] as? Number)?.toInt() ?: 0,
             tags = tags,
             color = (m["color"] as? Number)?.toInt() ?: 0,
             pinned = m["pinned"] == true || m["pinned"] == "true",
@@ -82,7 +81,8 @@ object JsonCodec {
             checklist = checks,
             createdAt = (m["createdAt"] as? Number)?.toLong() ?: 0L,
             updatedAt = (m["updatedAt"] as? Number)?.toLong() ?: 0L,
-            reminderAt = (m["reminderAt"] as? Number)?.toLong() ?: 0L,
+            kind = (m["kind"] as? Number)?.toInt() ?: 0,
+            done = m["done"] == true || m["done"] == "true",
         )
     }
 
@@ -133,7 +133,6 @@ object JsonCodec {
 
         fun readObject(): Map<String, Any?> {
             val map = mutableMapOf<String, Any?>()
-            ws()
             while (!end()) {
                 ws()
                 if (peek() == '}') { next(); break }
