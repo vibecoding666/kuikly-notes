@@ -250,13 +250,13 @@ internal class NotesPage : Pager() {
             switchTab(t)
         }
         if (pagerEvent == "openMenu") {
-            val n = notes.firstOrNull { !it.deleted } ?: repo.create(KIND_NOTE)
+            val n = repo.all().firstOrNull { !it.deleted } ?: repo.create(KIND_NOTE)
             openEditor(n.id)
             toggleMenu()
         }
         if (pagerEvent == "deleteTest") {
             // Exercise the two-step delete path end to end.
-            val n = notes.firstOrNull { !it.deleted }
+            val n = repo.all().firstOrNull { !it.deleted }
             if (n == null) {
                 KLog.d(TAG, "MARK deleteTest noNote")
             } else {
