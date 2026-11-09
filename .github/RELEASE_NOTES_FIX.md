@@ -28,6 +28,21 @@
 
 `.github/workflows/diagnose.yml`（手动触发 / 诊断文件变更时自动触发）：在 GitHub-hosted Linux runner 上启用 KVM，矩阵跑 API 33、34 两个模拟器，安装 APK → 启动 MainActivity → 抓取完整 logcat、dumpsys、截图并上传为 artifact。
 
+### UI 交互冒烟（`.github/scripts/smoke.sh`）
+
+同一场模拟器会话内追加定向点击 + monkey 随机探索，API 33/34 双矩阵：
+
+| 页面 / 动作 | 结果 |
+|---|---|
+| 首页 | 搜索框、统计条、5 个视图 tab、5 种排序、便签卡片、底部工具栏 完整渲染 |
+| 编辑页 | 标题、正文、标签、8 色、置顶/收藏/归档/复制、待办清单、保存 完整渲染 |
+| 输入与保存 | `input text` 生效，保存后列表由 3 条变 4 条 |
+| 统计页 | 统计数字、导出 JSON 文本、导入框、导入/刷新按钮 完整渲染 |
+| 标签页 | 全部标签 + 5 个真实标签 完整渲染 |
+| Monkey | 300 事件全部注入，进程存活 |
+
+两个 API 级别下 `FATAL EXCEPTION` / `ANR` / `Force finishing activity` 计数均为 **0**。
+
 ### 说明
 
 - release 签名证书在 CI 中临时生成，仅用于演示与验收；上架请换成自己的 keystore。
