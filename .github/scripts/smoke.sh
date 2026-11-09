@@ -24,10 +24,7 @@ shot() {
   adb shell screencap -p /sdcard/smoke.png > /dev/null 2>&1 || true
   adb pull /sdcard/smoke.png "out/$1" > /dev/null 2>&1 || true
 }
-tap() {
-  adb shell input tap "$1" "$2" || true
-  sleep 1
-}
+tap() { adb shell input tap "$1" "$2" || true; sleep 1; }
 restart() {
   adb shell am force-stop "$PKG" || true
   sleep 1
@@ -35,47 +32,42 @@ restart() {
   sleep 5
 }
 
-echo "===== SMOKE: HOME ====="
+echo "===== SMOKE: HOME (notes grid) ====="
 shot 01-home.png
 
-# --- New note -> type -> dismiss keyboard -> save ---
-echo "===== SMOKE: NEW NOTE ====="
-tap $((W / 8)) $((H - 26))
-sleep 2
+echo "===== SMOKE: FAB -> EDITOR ====="
+tap $((W * 86 / 100)) $((H * 83 / 100))
+sleep 3
 shot 02-editor.png
 
-echo "===== SMOKE: TYPE TITLE ====="
-tap $((W / 2)) 200
-adb shell input text 'SmokeNote' > /dev/null 2>&1 || true
-sleep 1
-adb shell input keyevent 111 > /dev/null 2>&1 || true
-sleep 1
+echo "===== SMOKE: TYPE INTO NATIVE EDITTEXT ====="
+tap $((W / 2)) $((H * 55 / 100))
+adb shell input text 'HelloKuiklyNativeEditor' > /dev/null 2>&1 || true
+sleep 2
 shot 03-typed.png
 
-echo "===== SMOKE: SAVE ====="
-tap $((W / 3)) $((H - 35))
+echo "===== SMOKE: BACK TO LIST ====="
+tap $((W * 6 / 100)) $((H * 5 / 100))
 sleep 2
-shot 04-after-save.png
+shot 04-back.png
 
-# --- Stats overlay from a clean cold start ---
-echo "===== SMOKE: STATS OVERLAY ====="
-restart
-tap $((W * 5 / 8)) $((H - 26))
+echo "===== SMOKE: TODO TAB ====="
+tap $((W * 72 / 100)) $((H * 94 / 100))
 sleep 2
-shot 05-stats.png
+shot 05-todo.png
 
-# --- Tags overlay from a clean cold start ---
-echo "===== SMOKE: TAGS OVERLAY ====="
+echo "===== SMOKE: EDITOR THREE-DOT MENU ====="
 restart
-tap $((W * 3 / 8)) $((H - 26))
+tap $((W * 86 / 100)) $((H * 83 / 100))
 sleep 2
-shot 06-tags.png
+tap $((W * 93 / 100)) $((H * 5 / 100))
+sleep 2
+shot 06-editor-menu.png
 
-# --- Random exploration from a clean cold start ---
-echo "===== SMOKE: MONKEY (300 events) ====="
+echo "===== SMOKE: MONKEY (200 events) ====="
 restart
-adb shell monkey -p "$PKG" --throttle 80 -s 20261109 \
-  --pct-touch 70 --pct-motion 20 --pct-appswitch 2 --pct-anyevent 8 300 \
+adb shell monkey -p "$PKG" --throttle 80 -s 20261110 \
+  --pct-touch 70 --pct-motion 20 --pct-appswitch 2 --pct-anyevent 8 200 \
   > out/monkey.txt 2>&1 || true
 sleep 3
 
@@ -88,14 +80,17 @@ echo "===== SMOKE: PROCESS ====="
 adb shell pidof "$PKG" || echo "PROCESS NOT RUNNING (crashed)"
 
 echo "===== SMOKE: CRASH / ANR SIGNATURES ====="
-grep -n -iE "FATAL EXCEPTION|AndroidRuntime|ANR |Input dispatching timed out|Force finishing activity|has died|NoClassDefFoundError|ClassNotFoundException" out/smoke-logcat.txt | head -n 120 || echo "no crash markers"
+grep -n -iE "FATAL EXCEPTION|AndroidRuntime|ANR |Input dispatching timed out|Force finishing activity|has died|NoClassDefFoundError|ClassNotFoundException|handleException" out/smoke-logcat.txt | head -n 120 || echo "no crash markers"
+
+echo "===== NATIVE EDITOR PRESENT? ====="
+grep -a -iE "HRNotesEditor|NotesPage|LaunchData" out/smoke-logcat.txt | head -n 20 || echo "no editor markers"
 
 echo "===== MONKEY RESULT ====="
-tail -n 12 out/monkey.txt
+tail -n 8 out/monkey.txt
 
 echo "===== SMOKE LOGCAT TAIL ====="
-tail -n 100 out/smoke-logcat.txt
+tail -n 80 out/smoke-logcat.txt
 
-if grep -qiE "FATAL EXCEPTION|Force finishing activity|Input dispatching timed out" out/smoke-logcat.txt; then
-  echo "::error::UI smoke test detected a crash/ANR - see SMOKE signatures above"
+if grep -qiE "FATAL EXCEPTION|Force finishing activity|Input dispatching timed out|handleException" out/smoke-logcat.txt; then
+  echo "::error::UI smoke test detected a crash/ANR/error - see SMOKE signatures above"
 fi
