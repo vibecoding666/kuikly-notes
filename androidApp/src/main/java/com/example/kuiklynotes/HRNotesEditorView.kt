@@ -100,7 +100,7 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
                     suppressWatcher = false
                 }
                 fireMeta(text.length)
-                readyCallback?.invoke(emptyMap())
+                readyCallback?.invoke(emptyMap<String, Any>())
             }
         }
     }
