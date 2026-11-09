@@ -63,9 +63,10 @@ shot 03-typed.png
 
 echo "===== SMOKE: EDITOR THREE-DOT MENU ====="
 adb logcat -c || true
-tap $((W * 93 / 100)) $((H * 5 / 100))
+# dismiss the soft keyboard first (ESC closes the IME without leaving the editor)
+adb shell input keyevent 111 || true
 sleep 1
-tap $((W * 95 / 100)) $((H * 4 / 100))
+tap $((W * 83 / 100)) $((H * 8 / 100))
 sleep 2
 if wait_log "MARK menuOpen=true" 10; then
   echo "OK: editor three-dot menu opened"
@@ -89,6 +90,26 @@ else
 fi
 shot 05-back.png
 
+echo "===== SMOKE: DELETE IS TWO-STEP ====="
+adb logcat -c || true
+# The delete (x) button of the last card, bottom-right of the grid.
+tap $((W * 36 / 100)) $((H * 77 / 100))
+sleep 2
+if wait_log "MARK deleteArmed" 8; then
+  echo "OK: first tap only arms the delete"
+  shot 06-delete-armed.png
+  tap $((W * 36 / 100)) $((H * 77 / 100))
+  sleep 2
+  if wait_log "MARK deleted" 8; then
+    echo "OK: second tap deletes"
+  else
+    echo "FAIL: second tap did not delete"
+  fi
+  shot 07-deleted.png
+else
+  echo "FAIL: delete button not found by coordinates"
+fi
+
 echo "===== SMOKE: TODO TAB (via intent, deterministic) ====="
 adb shell am force-stop "$PKG" || true
 sleep 1
@@ -100,7 +121,7 @@ if wait_log "MARK tab=1" 15; then
 else
   echo "FAIL: todo tab not selected"
 fi
-shot 06-todo.png
+shot 08-todo.png
 
 echo "===== SMOKE: NOTES TAB (via intent, deterministic) ====="
 adb shell am force-stop "$PKG" || true
@@ -109,7 +130,7 @@ adb logcat -c || true
 adb shell am start -W -n "$PKG/.MainActivity" --ei tab 0 || true
 sleep 4
 wait_log "MARK tab=0" 12 || true
-shot 07-notes.png
+shot 09-notes.png
 
 echo "===== SMOKE: 500K STRESS SAMPLE (intent hook) ====="
 adb shell am force-stop "$PKG" || true
@@ -123,13 +144,13 @@ else
   echo "FAIL: stress request not received"
 fi
 sleep 6
-shot 08-stress.png
+shot 10-stress.png
 
 echo "===== SMOKE: TYPE INTO 500K DOCUMENT ====="
 tap $((W / 2)) $((H * 55 / 100))
 adb shell input text 'X' > /dev/null 2>&1 || true
 sleep 3
-shot 09-stress-typed.png
+shot 11-stress-typed.png
 
 echo "===== SMOKE: MONKEY (200 events) ====="
 adb shell am force-stop "$PKG" || true
@@ -140,7 +161,7 @@ adb shell monkey -p "$PKG" --throttle 80 -s 20261110 \
   --pct-touch 70 --pct-motion 20 --pct-appswitch 2 --pct-anyevent 8 200 \
   > out/monkey.txt 2>&1 || true
 sleep 3
-shot 10-final.png
+shot 12-final.png
 
 echo "===== SMOKE: CAPTURE ====="
 adb logcat -d -b crash -b main -v time > "$LOG" 2>&1 || true
