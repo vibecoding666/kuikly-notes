@@ -273,7 +273,69 @@ internal class NotesPage : Pager() {
                                 if (row.left != null) {
                                     View {
                                         attr { flex(1f); marginRight(5f) }
-                                        card(row.left)
+                                        val c = row.left!!
+if (c.id == "__empty__") {
+            View {
+                attr {
+                    height(120f); borderRadius(16f)
+                    backgroundColor(if (ctx.dark) Color(0xFF1D2127L) else PAPER)
+                    allCenter()
+                }
+                Text { attr { text(c.title); fontSize(13f); color(if (ctx.dark) Color(0xFFEEF1F5L) else INK) } }
+                Text { attr { text(c.summary); fontSize(10f); color(MUTED); marginTop(6f) } }
+            }
+        } else {
+            View {
+                attr {
+                    height(126f); borderRadius(16f)
+                    backgroundColor(if (ctx.dark) Color(0xFF1D2127L) else PAPER)
+                    padding(left = 12f, right = 10f, top = 12f, bottom = 10f)
+                }
+                event { click { if (!c.trashed) ctx.openEditor(c.id) } }
+                View {
+                    attr { flexDirectionRow() }
+                    View { attr { size(4f, 16f); borderRadius(2f); backgroundColor(Color(c.color)); marginRight(7f) } }
+                    Text {
+                        attr {
+                            text(c.title); fontSize(13f); fontWeightBold()
+                            color(if (ctx.dark) Color(0xFFEEF1F5L) else INK)
+                            flex(1f)
+                        }
+                    }
+                    if (c.pinned) { Text { attr { text("⌃"); fontSize(11f); color(ACCENT) } } }
+                    if (c.starred) { Text { attr { text("☆"); fontSize(11f); color(ACCENT); marginLeft(3f) } } }
+                }
+                Text {
+                    attr {
+                        text(c.summary); fontSize(10f)
+                        color(if (ctx.dark) Color(0xFFC3CAD3L) else INK2)
+                        marginTop(7f); flex(1f)
+                    }
+                }
+                View {
+                    attr { flexDirectionRow(); marginTop(7f); allCenter() }
+                    Text { attr { text(c.meta); fontSize(9f); color(MUTED); flex(1f) } }
+                    if (c.trashed) {
+                        View {
+                            attr { size(26f, 24f); borderRadius(8f); backgroundColor(ACCENT_SOFT); allCenter() }
+                            event { click { ctx.repo.restore(c.id); ctx.refresh(); ctx.say("已恢复") } }
+                            Text { attr { text("↺"); fontSize(12f); color(ACCENT) } }
+                        }
+                    } else {
+                        View {
+                            attr { size(26f, 24f); borderRadius(8f); backgroundColor(ACCENT_SOFT); allCenter() }
+                            event {
+                                click {
+                                    if (c.trashed) ctx.repo.purge(c.id) else { ctx.repo.softDelete(c.id); ctx.say("已移入回收站") }
+                                    ctx.refresh()
+                                }
+                            }
+                            Text { attr { text("×"); fontSize(12f); color(DANGER) } }
+                        }
+                    }
+                }
+            }
+        }
                                     }
                                 } else {
                                     View { attr { flex(1f); marginRight(5f) } }
@@ -281,7 +343,69 @@ internal class NotesPage : Pager() {
                                 if (row.right != null) {
                                     View {
                                         attr { flex(1f); marginLeft(5f) }
-                                        card(row.right)
+                                        val c = row.right!!
+if (c.id == "__empty__") {
+            View {
+                attr {
+                    height(120f); borderRadius(16f)
+                    backgroundColor(if (ctx.dark) Color(0xFF1D2127L) else PAPER)
+                    allCenter()
+                }
+                Text { attr { text(c.title); fontSize(13f); color(if (ctx.dark) Color(0xFFEEF1F5L) else INK) } }
+                Text { attr { text(c.summary); fontSize(10f); color(MUTED); marginTop(6f) } }
+            }
+        } else {
+            View {
+                attr {
+                    height(126f); borderRadius(16f)
+                    backgroundColor(if (ctx.dark) Color(0xFF1D2127L) else PAPER)
+                    padding(left = 12f, right = 10f, top = 12f, bottom = 10f)
+                }
+                event { click { if (!c.trashed) ctx.openEditor(c.id) } }
+                View {
+                    attr { flexDirectionRow() }
+                    View { attr { size(4f, 16f); borderRadius(2f); backgroundColor(Color(c.color)); marginRight(7f) } }
+                    Text {
+                        attr {
+                            text(c.title); fontSize(13f); fontWeightBold()
+                            color(if (ctx.dark) Color(0xFFEEF1F5L) else INK)
+                            flex(1f)
+                        }
+                    }
+                    if (c.pinned) { Text { attr { text("⌃"); fontSize(11f); color(ACCENT) } } }
+                    if (c.starred) { Text { attr { text("☆"); fontSize(11f); color(ACCENT); marginLeft(3f) } } }
+                }
+                Text {
+                    attr {
+                        text(c.summary); fontSize(10f)
+                        color(if (ctx.dark) Color(0xFFC3CAD3L) else INK2)
+                        marginTop(7f); flex(1f)
+                    }
+                }
+                View {
+                    attr { flexDirectionRow(); marginTop(7f); allCenter() }
+                    Text { attr { text(c.meta); fontSize(9f); color(MUTED); flex(1f) } }
+                    if (c.trashed) {
+                        View {
+                            attr { size(26f, 24f); borderRadius(8f); backgroundColor(ACCENT_SOFT); allCenter() }
+                            event { click { ctx.repo.restore(c.id); ctx.refresh(); ctx.say("已恢复") } }
+                            Text { attr { text("↺"); fontSize(12f); color(ACCENT) } }
+                        }
+                    } else {
+                        View {
+                            attr { size(26f, 24f); borderRadius(8f); backgroundColor(ACCENT_SOFT); allCenter() }
+                            event {
+                                click {
+                                    if (c.trashed) ctx.repo.purge(c.id) else { ctx.repo.softDelete(c.id); ctx.say("已移入回收站") }
+                                    ctx.refresh()
+                                }
+                            }
+                            Text { attr { text("×"); fontSize(12f); color(DANGER) } }
+                        }
+                    }
+                }
+            }
+        }
                                     }
                                 } else {
                                     View { attr { flex(1f); marginLeft(5f) } }
@@ -301,7 +425,32 @@ internal class NotesPage : Pager() {
                                 }
                             }
                             vfor({ ctx.todoOpen }) { c ->
-                                todoRow(c)
+                                View {
+            attr {
+                flexDirectionRow(); height(50f)
+                margin(left = 14f, right = 14f, bottom = 7f)
+                padding(left = 12f, right = 12f)
+                borderRadius(13f)
+                backgroundColor(if (ctx.dark) Color(0xFF1D2127L) else PAPER)
+                allCenter()
+            }
+            event { click { ctx.repo.toggleDone(c.id); ctx.refresh() } }
+            View {
+                attr {
+                    size(19f, 19f); borderRadius(7f)
+                    backgroundColor(if (c.done) ACCENT else ACCENT_SOFT)
+                    allCenter()
+                }
+                if (c.done) { Text { attr { text("✓"); fontSize(11f); color(PAPER) } } }
+            }
+            Text {
+                attr {
+                    text(c.title); fontSize(13f); flex(1f); marginLeft(11f)
+                    color(if (c.done) MUTED else if (ctx.dark) Color(0xFFEEF1F5L) else INK)
+                }
+            }
+            Text { attr { text(c.meta); fontSize(9f); color(MUTED) } }
+        }
                             }
                             Text {
                                 attr {
@@ -311,7 +460,32 @@ internal class NotesPage : Pager() {
                                 }
                             }
                             vfor({ ctx.todoDone }) { c ->
-                                todoRow(c)
+                                View {
+            attr {
+                flexDirectionRow(); height(50f)
+                margin(left = 14f, right = 14f, bottom = 7f)
+                padding(left = 12f, right = 12f)
+                borderRadius(13f)
+                backgroundColor(if (ctx.dark) Color(0xFF1D2127L) else PAPER)
+                allCenter()
+            }
+            event { click { ctx.repo.toggleDone(c.id); ctx.refresh() } }
+            View {
+                attr {
+                    size(19f, 19f); borderRadius(7f)
+                    backgroundColor(if (c.done) ACCENT else ACCENT_SOFT)
+                    allCenter()
+                }
+                if (c.done) { Text { attr { text("✓"); fontSize(11f); color(PAPER) } } }
+            }
+            Text {
+                attr {
+                    text(c.title); fontSize(13f); flex(1f); marginLeft(11f)
+                    color(if (c.done) MUTED else if (ctx.dark) Color(0xFFEEF1F5L) else INK)
+                }
+            }
+            Text { attr { text(c.meta); fontSize(9f); color(MUTED) } }
+        }
                             }
                         }
                     }
@@ -513,101 +687,9 @@ internal class NotesPage : Pager() {
 
     // ---------- reusable card / row builders (called as DSL statements) ----------
 
-    private fun ViewContainer<*, *>.card(c: NoteCard) {
-        val ctx = this@NotesPage
-        if (c.id == "__empty__") {
-            View {
-                attr {
-                    height(120f); borderRadius(16f)
-                    backgroundColor(if (ctx.dark) Color(0xFF1D2127L) else PAPER)
-                    allCenter()
-                }
-                Text { attr { text(c.title); fontSize(13f); color(if (ctx.dark) Color(0xFFEEF1F5L) else INK) } }
-                Text { attr { text(c.summary); fontSize(10f); color(MUTED); marginTop(6f) } }
-            }
-        } else {
-            View {
-                attr {
-                    height(126f); borderRadius(16f)
-                    backgroundColor(if (ctx.dark) Color(0xFF1D2127L) else PAPER)
-                    padding(left = 12f, right = 10f, top = 12f, bottom = 10f)
-                }
-                event { click { if (!c.trashed) ctx.openEditor(c.id) } }
-                View {
-                    attr { flexDirectionRow() }
-                    View { attr { size(4f, 16f); borderRadius(2f); backgroundColor(Color(c.color)); marginRight(7f) } }
-                    Text {
-                        attr {
-                            text(c.title); fontSize(13f); fontWeightBold()
-                            color(if (ctx.dark) Color(0xFFEEF1F5L) else INK)
-                            flex(1f)
-                        }
-                    }
-                    if (c.pinned) { Text { attr { text("⌃"); fontSize(11f); color(ACCENT) } } }
-                    if (c.starred) { Text { attr { text("☆"); fontSize(11f); color(ACCENT); marginLeft(3f) } } }
-                }
-                Text {
-                    attr {
-                        text(c.summary); fontSize(10f)
-                        color(if (ctx.dark) Color(0xFFC3CAD3L) else INK2)
-                        marginTop(7f); flex(1f)
-                    }
-                }
-                View {
-                    attr { flexDirectionRow(); marginTop(7f); allCenter() }
-                    Text { attr { text(c.meta); fontSize(9f); color(MUTED); flex(1f) } }
-                    if (c.trashed) {
-                        View {
-                            attr { size(26f, 24f); borderRadius(8f); backgroundColor(ACCENT_SOFT); allCenter() }
-                            event { click { ctx.repo.restore(c.id); ctx.refresh(); ctx.say("已恢复") } }
-                            Text { attr { text("↺"); fontSize(12f); color(ACCENT) } }
-                        }
-                    } else {
-                        View {
-                            attr { size(26f, 24f); borderRadius(8f); backgroundColor(ACCENT_SOFT); allCenter() }
-                            event {
-                                click {
-                                    if (c.trashed) ctx.repo.purge(c.id) else { ctx.repo.softDelete(c.id); ctx.say("已移入回收站") }
-                                    ctx.refresh()
-                                }
-                            }
-                            Text { attr { text("×"); fontSize(12f); color(DANGER) } }
-                        }
-                    }
-                }
-            }
-        }
-    }
 
-    private fun ViewContainer<*, *>.todoRow(c: NoteCard) {
-        val ctx = this@NotesPage
-        View {
-            attr {
-                flexDirectionRow(); height(50f)
-                margin(left = 14f, right = 14f, bottom = 7f)
-                padding(left = 12f, right = 12f)
-                borderRadius(13f)
-                backgroundColor(if (ctx.dark) Color(0xFF1D2127L) else PAPER)
-                allCenter()
-            }
-            event { click { ctx.repo.toggleDone(c.id); ctx.refresh() } }
-            View {
-                attr {
-                    size(19f, 19f); borderRadius(7f)
-                    backgroundColor(if (c.done) ACCENT else ACCENT_SOFT)
-                    allCenter()
-                }
-                if (c.done) { Text { attr { text("✓"); fontSize(11f); color(PAPER) } } }
-            }
-            Text {
-                attr {
-                    text(c.title); fontSize(13f); flex(1f); marginLeft(11f)
-                    color(if (c.done) MUTED else if (ctx.dark) Color(0xFFEEF1F5L) else INK)
-                }
-            }
-            Text { attr { text(c.meta); fontSize(9f); color(MUTED) } }
-        }
-    }
+
+
 
     private fun onEditorMenu(label: String) {
         editorMenuOpen = false
