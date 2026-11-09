@@ -220,6 +220,11 @@ internal class NotesPage : Pager() {
 
             // ===== LIST SCREEN =====
             vfor({ ctx.screenList }) { _ ->
+                View {
+                    attr {
+                        absolutePosition(0f, 0f, 0f, 0f)
+                        flexDirectionColumn()
+                    }
                 // App bar
                 View {
                     attr {
@@ -427,6 +432,7 @@ if (c.id == "__empty__") {
 
                     // Todo: open group
                     vfor({ ctx.todoGroupOpen }) { _ ->
+                        View {
                         if (ctx.tab == 1) {
                             Text {
                                 attr {
@@ -499,6 +505,7 @@ if (c.id == "__empty__") {
         }
                             }
                         }
+                        }
                     }
                 }
 
@@ -555,6 +562,7 @@ if (c.id == "__empty__") {
                             }
                         }
                     }
+                }
                 }
             }
 
