@@ -475,13 +475,13 @@ internal class NotesPage : Pager() {
                         }
                     }
 
-                    // Undo bar: 5 seconds to bring a note back. Sits in the normal
-                    // flow right above the tab bar so the FAB never covers it.
+                    // Undo bar: 5 seconds to bring a note back. Floats above the FAB
+                    // and keeps its right edge clear so the button is never covered.
                     if (ctx.undoVisible) {
                         View {
                             attr {
+                                absolutePosition(bottom = 148f, left = 16f, right = 78f)
                                 height(44f)
-                                margin(left = 20f, right = 20f, bottom = 8f)
                                 borderRadius(14f)
                                 backgroundColor(INK)
                                 padding(left = 14f, right = 10f)
@@ -490,7 +490,7 @@ internal class NotesPage : Pager() {
                             }
                             Text {
                                 attr {
-                                    text("已移入回收站 · ${ctx.undoLabel}")
+                                    text("已移入回收站")
                                     fontSize(12f); color(PAPER); flex(1f)
                                 }
                             }
