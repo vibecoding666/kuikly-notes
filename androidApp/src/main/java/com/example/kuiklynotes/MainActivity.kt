@@ -27,6 +27,16 @@ class MainActivity : Activity() {
         val d = KuiklyRenderViewBaseDelegator(delegate)
         delegator = d
         d.onAttach(container, "", "NotesPage", emptyMap())
+
+        // CI hook: "adb shell am start -n com.example.kuiklynotes/.MainActivity --ei stress 500000"
+        // creates a 500k-character note and opens the editor, so the smoke test does
+        // not have to guess pixel coordinates.
+        val stress = intent?.getIntExtra("stress", 0) ?: 0
+        if (stress > 0) {
+            container.postDelayed({
+                delegator?.sendEvent("stress", mapOf("chars" to stress))
+            }, 2500)
+        }
     }
 
     override fun onResume() {

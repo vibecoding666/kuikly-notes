@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.util.TypedValue
 import android.widget.EditText
 import com.tencent.kuikly.core.render.android.export.IKuiklyRenderViewExport
@@ -84,6 +85,7 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
         if (id == noteId) return
         noteId = id
         io.execute {
+            val t0 = System.currentTimeMillis()
             val count = BodyFiles.chunkCount(id)
             for (i in 0 until count) {
                 val chunk = BodyFiles.readChunk(id, i)
@@ -99,6 +101,8 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
                     setText("")
                     suppressWatcher = false
                 }
+                val ms = System.currentTimeMillis() - t0
+                Log.i(TAG, "LOAD noteId=$id chunks=$count chars=${text.length} elapsedMs=$ms")
                 fireMeta(text.length)
                 readyCallback?.invoke(emptyMap<String, Any>())
             }
@@ -125,5 +129,9 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
             "flush" -> { flush(); null }
             else -> super.call(method, params, callback)
         }
+    }
+
+    companion object {
+        private const val TAG = "HRNotesEditor"
     }
 }

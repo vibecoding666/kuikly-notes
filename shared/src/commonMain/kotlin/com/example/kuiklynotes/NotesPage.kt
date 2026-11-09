@@ -7,6 +7,8 @@ import com.tencent.kuikly.core.base.Color
 import com.tencent.kuikly.core.base.ViewBuilder
 import com.tencent.kuikly.core.base.ViewRef
 import com.tencent.kuikly.core.directives.vfor
+import com.tencent.kuikly.core.log.KLog
+import com.tencent.kuikly.core.nvi.serialization.json.JSONObject
 import com.tencent.kuikly.core.pager.Pager
 import com.tencent.kuikly.core.reactive.collection.ObservableList
 import com.tencent.kuikly.core.reactive.handler.observable
@@ -83,7 +85,7 @@ internal class NotesPage : Pager() {
         listOf("笔记", "待办").forEach { tabLabels.add(it) }
         listOf("全部", "收藏", "置顶", "归档", "回收站").forEach { folderLabels.add(it) }
         listOf("最近", "创建", "标题", "置顶", "颜色").forEach { sortLabels.add(it) }
-        listOf("置顶", "收藏", "归档", "复制", "深色模式", "删除").forEach { menuLabels.add(it) }
+        listOf("置顶", "收藏", "归档", "复制", "深色模式", "删除", "压测样张（50 万字）").forEach { menuLabels.add(it) }
         syncSlots()
         refresh()
     }
@@ -148,6 +150,7 @@ internal class NotesPage : Pager() {
         createdText = timeText(n.createdAt)
         editedText = timeText(n.updatedAt)
         countText = "${n.length} 字"
+        KLog.d(TAG, "MARK editorOpen id=$id")
         screen = "editor"
         menuOpen = false
         syncSlots()
@@ -161,6 +164,7 @@ internal class NotesPage : Pager() {
             if (title != n.title) { n.title = title; repo.upsert(n) }
         }
         screen = "list"
+        KLog.d(TAG, "MARK editorClose")
         syncSlots()
         refresh()
     }
@@ -170,9 +174,21 @@ internal class NotesPage : Pager() {
         openEditor(n.id)
     }
 
+    /** Native -> common bridge, used by CI to trigger the 500k stress sample. */
+    override fun onReceivePagerEvent(pagerEvent: String, eventData: JSONObject) {
+        super.onReceivePagerEvent(pagerEvent, eventData)
+        if (pagerEvent == "stress") {
+            val chars = eventData.optInt("chars", 500_000)
+            KLog.d(TAG, "MARK stressRequest chars=$chars")
+            val n = repo.createStressNote(chars)
+            openEditor(n.id)
+        }
+    }
+
     private fun onMeta(length: Int, editedAt: Long) {
         countText = "$length 字"
         editedText = "刚刚"
+        KLog.d(TAG, "MARK meta length=$length")
         repo.updateBodyMeta(editingId, length, editedAt)
     }
 
@@ -180,6 +196,7 @@ internal class NotesPage : Pager() {
         tab = i
         folderIdx = 0
         tagFilter = NoteRepository.ALL_TAG
+        KLog.d(TAG, "MARK tab=$i")
         refresh()
     }
 
@@ -195,6 +212,11 @@ internal class NotesPage : Pager() {
             "复制" -> { repo.duplicate(editingId); refresh(); say("已创建副本") }
             "深色模式" -> { dark = !dark; say("已切换主题") }
             "删除" -> { repo.softDelete(editingId); closeEditor(); say("已移入回收站") }
+            "压测样张（50 万字）" -> {
+                val n = repo.createStressNote(500_000)
+                openEditor(n.id)
+                say("已生成 50 万字压测样张")
+            }
             else -> say("$label（示意）")
         }
     }
@@ -204,6 +226,10 @@ internal class NotesPage : Pager() {
         if (screen == "list") screenList.add("list") else screenEditor.add("editor")
         if (menuOpen && screen == "list") menuSlot.add("menu")
         if (todoSlot.isEmpty()) todoSlot.add("todo")
+    }
+
+    companion object {
+        private const val TAG = "NotesPage"
     }
 
     // ---------- UI ----------

@@ -12,6 +12,9 @@ expect fun bodyDelete(id: String)
 expect fun bodyPreview(id: String, limit: Int): String
 expect fun bodyCopy(srcId: String, dstId: String)
 
+/** Generate a synthetic body of ~targetChars characters (stress testing). */
+expect fun bodyWriteSample(id: String, targetChars: Int)
+
 data class CheckItem(var text: String = "", var done: Boolean = false)
 
 /**

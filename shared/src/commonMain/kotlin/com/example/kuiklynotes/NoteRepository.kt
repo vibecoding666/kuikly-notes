@@ -101,6 +101,19 @@ class NoteRepository {
         }
     }
 
+    /** Creates a note whose body is ~[chars] characters, for stress testing. */
+    fun createStressNote(chars: Int): Note {
+        val t = nowMillis()
+        val n = Note(
+            id = nextId(), title = "压测样张 $chars 字", createdAt = t, updatedAt = t,
+            kind = Note.KIND_NOTE, length = chars,
+        )
+        bodyWriteSample(n.id, chars)
+        notes.add(0, n)
+        save()
+        return n
+    }
+
     fun duplicate(id: String): Note? {
         val src = find(id) ?: return null
         val copy = src.copy(

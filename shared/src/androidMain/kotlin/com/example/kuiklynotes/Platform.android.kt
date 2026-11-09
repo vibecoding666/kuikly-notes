@@ -44,11 +44,19 @@ object BodyFiles {
         val n = if (text.isEmpty()) 0 else (text.length + CHUNK - 1) / CHUNK
         for (i in 0 until n) {
             val end = minOf((i + 1) * CHUNK, text.length)
-            part(id, i).writeText(text.substring(i * CHUNK, end), Charsets.UTF_8)
+            writeChunk(id, i, text.substring(i * CHUNK, end))
         }
         var stale = n
         while (part(id, stale).exists()) { part(id, stale).delete(); stale++ }
-        meta(id).writeText(n.toString(), Charsets.UTF_8)
+        writeMeta(id, n)
+    }
+
+    fun writeChunk(id: String, index: Int, text: String) {
+        part(id, index).writeText(text, Charsets.UTF_8)
+    }
+
+    fun writeMeta(id: String, count: Int) {
+        meta(id).writeText(count.toString(), Charsets.UTF_8)
     }
 
     fun copy(src: String, dst: String) {
@@ -83,3 +91,20 @@ actual fun bodyWrite(id: String, text: String) { BodyFiles.write(id, text) }
 actual fun bodyDelete(id: String) { BodyFiles.clear(id) }
 actual fun bodyPreview(id: String, limit: Int): String = BodyFiles.readPrefix(id, limit)
 actual fun bodyCopy(srcId: String, dstId: String) { BodyFiles.copy(srcId, dstId) }
+
+actual fun bodyWriteSample(id: String, targetChars: Int) {
+    val unit = "这是一段用于压力测试的中文样张，包含标点、换行与数字 0123456789。\n"
+    val chunk = 32_768
+    val sb = StringBuilder(chunk + unit.length)
+    var written = 0
+    var index = 0
+    while (written < targetChars) {
+        sb.setLength(0)
+        while (sb.length < chunk && written + sb.length < targetChars) sb.append(unit)
+        val take = minOf(chunk, targetChars - written)
+        BodyFiles.writeChunk(id, index, sb.toString().take(take))
+        written += take
+        index++
+    }
+    BodyFiles.writeMeta(id, index)
+}
