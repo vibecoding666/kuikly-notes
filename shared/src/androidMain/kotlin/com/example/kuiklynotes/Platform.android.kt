@@ -117,3 +117,13 @@ actual fun bodyWriteSample(id: String, targetChars: Int) {
 
 actual fun setEditorOpen(open: Boolean) { EditorState.open = open }
 actual fun isEditorOpen(): Boolean = EditorState.open
+
+actual fun openEditorActivity(noteId: String) {
+    val c = AppHolder.context ?: return
+    // Resolved by class name so the shared module does not need to depend on the app module.
+    val intent = android.content.Intent()
+        .setClassName(c, "com.example.kuiklynotes.EditorActivity")
+        .putExtra("noteId", noteId)
+        .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+    runCatching { c.startActivity(intent) }
+}

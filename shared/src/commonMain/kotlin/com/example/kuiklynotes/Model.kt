@@ -19,6 +19,9 @@ expect fun bodyWriteSample(id: String, targetChars: Int)
 expect fun setEditorOpen(open: Boolean)
 expect fun isEditorOpen(): Boolean
 
+/** Open the native editor Activity for [noteId]. */
+expect fun openEditorActivity(noteId: String)
+
 data class CheckItem(var text: String = "", var done: Boolean = false)
 
 /**

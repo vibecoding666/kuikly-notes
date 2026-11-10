@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F6F4EE"
+    android:fitsSystemWindows="true">
+
+    <!-- Top bar: back + title + more -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="10dp"
+        android:paddingEnd="12dp">
+
+        <TextView
+            android:id="@+id/btnBack"
+            android:layout_width="36dp"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:text="‹"
+            android:textSize="24sp"
+            android:textColor="#232830"
+            android:background="?android:attr/selectableItemBackground" />
+
+        <EditText
+            android:id="@+id/etTitle"
+            android:layout_width="0dp"
+            android:layout_height="38dp"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="标题"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:textColor="#232830"
+            android:textColorHint="#9299A2"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:gravity="center_vertical"
+            android:imeOptions="actionNext"
+            android:maxLines="1"
+            android:inputType="text" />
+
+        <TextView
+            android:id="@+id/btnMore"
+            android:layout_width="34dp"
+            android:layout_height="40dp"
+            android:gravity="center"
+            android:text="⋮"
+            android:textSize="19sp"
+            android:textColor="#4A515A"
+            android:background="?android:attr/selectableItemBackground" />
+    </LinearLayout>
+
+    <!-- Meta row: created / edited / word count -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="18dp"
+        android:paddingEnd="16dp">
+
+        <TextView
+            android:id="@+id/tvCreated"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:textColor="#9299A2" />
+
+        <TextView
+            android:id="@+id/tvEdited"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:textSize="10sp"
+            android:textColor="#9299A2" />
+
+        <TextView
+            android:id="@+id/tvCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:textColor="#2F5D8C" />
+    </LinearLayout>
+
+    <!-- Body: plain platform EditText, no boxes -->
+    <EditText
+        android:id="@+id/etBody"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@null"
+        android:gravity="top|start"
+        android:hint="正文"
+        android:textSize="15sp"
+        android:textColor="#232830"
+        android:textColorHint="#9299A2"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="16dp"
+        android:lineSpacingMultiplier="1.35"
+        android:inputType="textMultiLine|textCapSentences"
+        android:scrollbars="vertical"
+        android:scrollbarStyle="insideInset"
+        android:overScrollMode="never"
+        android:includeFontPadding="false" />
+</LinearLayout>

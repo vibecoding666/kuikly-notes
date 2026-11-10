@@ -253,19 +253,24 @@ internal class NotesPage : Pager() {
     }
 
     private fun openEditor(id: String) {
-        val n = repo.find(id) ?: return
+        // The editor runs in its own Activity (see EditorActivity): Kuikly's gesture
+        // detector swallows MOVE events, which made a nested native EditText unable
+        // to scroll. Opening a native screen fixes scrolling, IME and long documents.
         editingId = id
-        editorId = id
-        titleValue = n.title
-        editTitle = n.title
-        createdText = timeText(n.createdAt)
-        editedText = timeText(n.updatedAt)
-        countText = "${n.length} 字"
         KLog.d(TAG, "MARK editorOpen id=$id")
         setEditorOpen(true)
-        screen = "editor"
-        menuOpen = false
+        openEditorActivity(id)
+    }
+
+    override fun pageDidAppear() {
+        super.pageDidAppear()
+        // Coming back from the native editor: reload metadata and rebuild the list.
+        setEditorOpen(false)
+        if (screen != "list") screen = "list"
+        repo.load()
         syncSlots()
+        refresh()
+        KLog.d(TAG, "MARK pageAppear")
     }
 
     private fun closeEditor() {
@@ -311,9 +316,10 @@ internal class NotesPage : Pager() {
             switchTab(t)
         }
         if (pagerEvent == "openMenu") {
-            val n = repo.all().firstOrNull { !it.deleted } ?: repo.create(KIND_NOTE)
-            openEditor(n.id)
-            toggleMenu()
+            // List-screen menu only (the editor menu lives in the native Activity now).
+            menuOpen = true
+            KLog.d(TAG, "MARK menuOpen=true screen=$screen")
+            syncSlots()
         }
         if (pagerEvent == "deleteTest") {
             // Exercise the two-step delete path end to end.

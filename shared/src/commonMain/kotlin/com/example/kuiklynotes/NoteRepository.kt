@@ -9,8 +9,13 @@ class NoteRepository {
     fun load() {
         notes.clear()
         val raw = storageLoad()
-        if (raw.isNotBlank()) runCatching { notes.addAll(JsonCodec.decode(raw)) }
-        if (notes.isEmpty()) seed()
+        if (raw.isNotBlank()) {
+            runCatching { notes.addAll(JsonCodec.decode(raw)) }
+            return
+        }
+        // Only seed on a genuinely fresh install. An empty "[]" means the user
+        // deleted every note and must NOT be repopulated with samples.
+        seed()
     }
 
     fun save() { storageSave(JsonCodec.encode(notes)) }
