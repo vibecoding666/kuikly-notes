@@ -133,12 +133,14 @@ sleep 3
 shot 11-stress-typed.png
 
 echo "===== SMOKE: SCROLL THE 500K BODY ====="
-# Swipe upwards three times: a working body should scroll far more than a line.
-adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 30 / 100)) 300 || true
+# Dismiss the IME and swipe inside the visible body area (not over the keyboard).
+adb shell input keyevent 111 || true
 sleep 1
-adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 30 / 100)) 300 || true
+adb shell input swipe $((W / 2)) $((H * 38 / 100)) $((W / 2)) $((H * 12 / 100)) 300 || true
 sleep 1
-adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 30 / 100)) 300 || true
+adb shell input swipe $((W / 2)) $((H * 38 / 100)) $((W / 2)) $((H * 12 / 100)) 300 || true
+sleep 1
+adb shell input swipe $((W / 2)) $((H * 38 / 100)) $((W / 2)) $((H * 12 / 100)) 300 || true
 sleep 2
 shot 12-stress-scrolled.png
 # Native EditText must report both MOVE events and a scrolling offset.

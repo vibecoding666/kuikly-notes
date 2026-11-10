@@ -100,7 +100,7 @@ class EditorActivity : Activity() {
         etBody.setOnTouchListener { _, e ->
             if (e.actionMasked == MotionEvent.ACTION_MOVE) {
                 moveCount++
-                if (moveCount % 5 == 0) Log.i(TAG, "MOVE n=$moveCount")
+                Log.i(TAG, "MOVE n=$moveCount")
             }
             false
         }
