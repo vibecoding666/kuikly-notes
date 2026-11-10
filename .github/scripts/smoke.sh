@@ -40,13 +40,19 @@ echo "screen: ${W}x${H}"
 echo "===== SMOKE: HOME ====="
 shot 01-home.png
 
-echo "===== SMOKE: OPEN EDITOR (FAB) ====="
+echo "===== SMOKE: OPEN EDITOR (FAB -> native Activity) ====="
 tap $((W * 86 / 100)) $((H * 83 / 100))
-sleep 2
+sleep 3
 if wait_log "MARK editorOpen" 12; then
-  echo "OK: editor opened"
+  echo "OK: editor requested"
 else
   echo "FAIL: editor did not open"
+fi
+sleep 2
+if adb shell dumpsys activity activities | grep -q "EditorActivity"; then
+  echo "OK: native EditorActivity is running"
+else
+  echo "FAIL: EditorActivity not found in the activity stack"
 fi
 shot 02-editor.png
 
@@ -54,33 +60,15 @@ echo "===== SMOKE: TYPE INTO NATIVE EDITTEXT ====="
 tap $((W / 2)) $((H * 55 / 100))
 adb shell input text 'KuiklyNativeEditor' > /dev/null 2>&1 || true
 sleep 2
-if wait_log "MARK meta length=" 12; then
-  echo "OK: native editor reported meta"
-else
-  echo "FAIL: no meta event from native editor"
-fi
 shot 03-typed.png
-
-echo "===== SMOKE: EDITOR THREE-DOT MENU (intent hook) ====="
-adb shell am force-stop "$PKG" || true
-sleep 1
-adb logcat -c || true
-adb shell am start -W -n "$PKG/.MainActivity" --ei menu 1 || true
-sleep 4
-if wait_log "MARK menuOpen=true" 15; then
-  echo "OK: editor three-dot menu opened"
-else
-  echo "FAIL: editor three-dot menu did not open"
-fi
-shot 04-editor-menu.png
 
 echo "===== SMOKE: BACK TO LIST ====="
 adb shell input keyevent KEYCODE_BACK || true
-sleep 2
-if wait_log "MARK editorClose" 10; then
-  echo "OK: editor closed"
+sleep 3
+if wait_log "MARK pageAppear" 12; then
+  echo "OK: back to list after editor"
 else
-  echo "FAIL: editor did not close (back key missed)"
+  echo "FAIL: did not return to the note list"
 fi
 shot 05-back.png
 
@@ -153,14 +141,19 @@ sleep 1
 adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 30 / 100)) 300 || true
 sleep 2
 shot 12-stress-scrolled.png
-# The probe that matters is whether MOVE events actually reach the native editor.
-# (TextView text scrolling bypasses onScrollChanged / computeVerticalScrollOffset.)
+# Native EditText must report both MOVE events and a scrolling offset.
 MOVE_LAST=$(adb logcat -d | grep -oE "MOVE n=[0-9]+" | tail -n 1 | grep -oE "[0-9]+")
-echo "move events delivered to editor: ${MOVE_LAST:-none}"
+SCROLL_LAST=$(adb logcat -d | grep -oE "SCROLL y=[0-9]+" | tail -n 1 | grep -oE "[0-9]+")
+echo "move events to editor: ${MOVE_LAST:-none}, scroll offset: ${SCROLL_LAST:-none}"
 if [ -n "$MOVE_LAST" ] && [ "$MOVE_LAST" -gt 5 ]; then
-  echo "OK: swipe gestures reach the native editor (n=$MOVE_LAST)"
+  echo "OK: gestures reach the native editor (n=$MOVE_LAST)"
 else
   echo "FAIL: gestures are still being intercepted (n=${MOVE_LAST:-0})"
+fi
+if [ -n "$SCROLL_LAST" ] && [ "$SCROLL_LAST" -gt 200 ]; then
+  echo "OK: long document scrolls far (y=$SCROLL_LAST)"
+else
+  echo "FAIL: document barely scrolled (y=${SCROLL_LAST:-0})"
 fi
 
 echo "===== SMOKE: LONG-PRESS MULTI-SELECT DELETE (intent hook) ====="

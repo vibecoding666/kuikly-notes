@@ -8,8 +8,10 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.widget.EditText
 import android.widget.PopupMenu
 import android.widget.TextView
@@ -32,6 +34,7 @@ class EditorActivity : Activity() {
     private var dirty = false
     private var savePending: Runnable? = null
     private var originalTitle: String = ""
+    private var moveCount = 0
 
     private lateinit var etTitle: EditText
     private lateinit var etBody: EditText
@@ -90,9 +93,20 @@ class EditorActivity : Activity() {
     private fun styleBody() {
         etBody.gravity = Gravity.TOP or Gravity.START
         etBody.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
-        // Stock EditText: no AppCompat wrapper, no PrecomputedText (it is ignored for
-        // editable text anyway), just plain fast scrolling.
         etBody.isVerticalScrollBarEnabled = true
+
+        // Probes for the CI smoke test: prove that gestures and scrolling reach the
+        // native editor (previously Kuikly's container swallowed every MOVE event).
+        etBody.setOnTouchListener { _, e ->
+            if (e.actionMasked == MotionEvent.ACTION_MOVE) {
+                moveCount++
+                if (moveCount % 5 == 0) Log.i(TAG, "MOVE n=$moveCount")
+            }
+            false
+        }
+        etBody.setOnScrollChangeListener { _, _, y, _, _ ->
+            Log.i(TAG, "SCROLL y=$y")
+        }
     }
 
     private fun updateCount() {
@@ -181,6 +195,7 @@ class EditorActivity : Activity() {
 
     companion object {
         private const val EXTRA_ID = "noteId"
+        private const val TAG = "EditorBody"
 
         fun start(context: Context, noteId: String) {
             context.startActivity(
