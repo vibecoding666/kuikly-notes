@@ -96,26 +96,34 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
      */
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                // Take the gesture: the body must scroll itself, not the page.
+            MotionEvent.ACTION_DOWN -> parent?.requestDisallowInterceptTouchEvent(true)
+            MotionEvent.ACTION_MOVE -> {
+                // Kuikly's container re-arms its own gesture detector during a drag,
+                // so the request has to be renewed on every MOVE. Without this the
+                // body only scrolls a tiny amount per gesture.
                 parent?.requestDisallowInterceptTouchEvent(true)
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
                 parent?.requestDisallowInterceptTouchEvent(false)
-            }
         }
         return super.dispatchTouchEvent(event)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        parent?.requestDisallowInterceptTouchEvent(true)
+        if (event.actionMasked != MotionEvent.ACTION_UP &&
+            event.actionMasked != MotionEvent.ACTION_CANCEL
+        ) {
+            parent?.requestDisallowInterceptTouchEvent(true)
+        }
         return super.onTouchEvent(event)
     }
 
-    override fun onScrollChanged(horiz: Int, vert: Int, oldHoriz: Int, oldVert: Int) {
-        super.onScrollChanged(horiz, vert, oldHoriz, oldVert)
-        // Used by the smoke test to prove that scrolling really moves the body.
-        Log.i(TAG, "SCROLL y=$vert dy=${vert - oldVert}")
+    /** Scroll probe used by the smoke test: TextView text scrolling bypasses
+     *  onScrollChanged, but this is called on every scroll step. */
+    override fun computeVerticalScrollOffset(): Int {
+        val y = super.computeVerticalScrollOffset()
+        Log.i(TAG, "SCROLL y=$y")
+        return y
     }
 
     override fun setProp(propKey: String, propValue: Any): Boolean {
