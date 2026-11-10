@@ -112,6 +112,12 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
         return super.onTouchEvent(event)
     }
 
+    override fun onScrollChanged(horiz: Int, vert: Int, oldHoriz: Int, oldVert: Int) {
+        super.onScrollChanged(horiz, vert, oldHoriz, oldVert)
+        // Used by the smoke test to prove that scrolling really moves the body.
+        Log.i(TAG, "SCROLL y=$vert dy=${vert - oldVert}")
+    }
+
     override fun setProp(propKey: String, propValue: Any): Boolean {
         return when (propKey) {
             "noteId" -> { load(propValue.toString()); true }

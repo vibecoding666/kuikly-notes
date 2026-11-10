@@ -144,6 +144,41 @@ adb shell input text 'X' > /dev/null 2>&1 || true
 sleep 3
 shot 11-stress-typed.png
 
+echo "===== SMOKE: SCROLL THE 500K BODY ====="
+# Swipe upwards three times: a working body should scroll far more than a line.
+adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 30 / 100)) 300 || true
+sleep 1
+adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 30 / 100)) 300 || true
+sleep 1
+adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 30 / 100)) 300 || true
+sleep 2
+shot 12-stress-scrolled.png
+SCROLL_LAST=$(adb logcat -d | grep -oE "SCROLL y=[0-9]+" | tail -n 1 | grep -oE "[0-9]+")
+echo "scroll offset after 3 swipes: ${SCROLL_LAST:-none}"
+if [ -n "$SCROLL_LAST" ] && [ "$SCROLL_LAST" -gt 200 ]; then
+  echo "OK: body scrolled far (y=$SCROLL_LAST)"
+else
+  echo "FAIL: body barely scrolled (y=${SCROLL_LAST:-0}) - gesture is still being intercepted"
+fi
+
+echo "===== SMOKE: LONG-PRESS MULTI-SELECT DELETE (intent hook) ====="
+adb shell am force-stop "$PKG" || true
+sleep 1
+adb logcat -c || true
+adb shell am start -W -n "$PKG/.MainActivity" --es select_test 1 || true
+sleep 5
+if wait_log "MARK selectionOn" 15; then
+  echo "OK: long-press enters selection mode"
+else
+  echo "FAIL: selection mode did not start"
+fi
+if wait_log "MARK bulkDeleted" 10; then
+  echo "OK: bulk delete removed the selected notes"
+else
+  echo "FAIL: bulk delete did not run"
+fi
+shot 13-bulk-deleted.png
+
 echo "===== SMOKE: MONKEY (200 events) ====="
 adb shell am force-stop "$PKG" || true
 sleep 1
@@ -153,7 +188,7 @@ adb shell monkey -p "$PKG" --throttle 80 -s 20261110 \
   --pct-touch 70 --pct-motion 20 --pct-appswitch 2 --pct-anyevent 8 200 \
   > out/monkey.txt 2>&1 || true
 sleep 3
-shot 12-final.png
+shot 14-final.png
 
 echo "===== SMOKE: CAPTURE ====="
 adb logcat -d -b crash -b main -v time > "$LOG" 2>&1 || true
