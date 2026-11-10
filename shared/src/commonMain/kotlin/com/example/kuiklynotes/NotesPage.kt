@@ -38,6 +38,7 @@ internal class NoteCard(
     val id: String, val title: String, val summary: String, val meta: String,
     val color: Long, val pinned: Boolean, val starred: Boolean,
     val trashed: Boolean, val done: Boolean, val pendingDelete: Boolean = false,
+    val selected: Boolean = false,
 )
 
 @Page("NotesPage")
@@ -82,12 +83,16 @@ internal class NotesPage : Pager() {
     private var todoSlot: ObservableList<String> by observableList()
     private var pendingDeleteIds = mutableSetOf<String>()
     private var suppressCardClickUntil = 0L
+    private var selectionMode by observable(false)
+    private var selectionTitle by observable("")
+    private val selectedIds = mutableSetOf<String>()
     private var undoVisible by observable(false)
     private var undoId by observable("")
+    private val undoIds = mutableListOf<String>()
     private var undoLabel by observable("")
     private var pendingMetaLength = 0
     private var pendingMetaAt = 0L
-    private var metaSaveScheduled = false
+    private var metaDirty = false
 
     init {
         repo.load()
@@ -136,6 +141,7 @@ internal class NotesPage : Pager() {
         color = NoteColors.palette[NoteColors.normalized(color)],
         pinned = pinned, starred = starred, trashed = deleted, done = done,
         pendingDelete = pendingDeleteIds.contains(id),
+        selected = selectedIds.contains(id),
     )
 
     private fun timeText(t: Long): String {
@@ -188,10 +194,62 @@ internal class NotesPage : Pager() {
     }
 
     private fun undoDelete() {
-        if (undoId.isNotEmpty()) repo.restore(undoId)
+        if (undoIds.isNotEmpty()) undoIds.forEach { repo.restore(it) } else if (undoId.isNotEmpty()) repo.restore(undoId)
+        undoIds.clear()
         undoVisible = false
         refresh()
         say("已撤销")
+    }
+
+    // ---------- multi-select delete (long press) ----------
+
+    private fun enterSelection(id: String) {
+        selectionMode = true
+        selectedIds.clear()
+        selectedIds.add(id)
+        suppressCardClickUntil = nowMillis() + 400
+        updateSelectionTitle()
+        KLog.d(TAG, "MARK selectionOn count=1")
+        refresh()
+    }
+
+    private fun toggleSelection(id: String) {
+        if (!selectedIds.remove(id)) selectedIds.add(id)
+        updateSelectionTitle()
+        if (selectedIds.isEmpty()) {
+            exitSelection()
+        } else {
+            refresh()
+        }
+    }
+
+    private fun updateSelectionTitle() {
+        selectionTitle = "已选 ${selectedIds.size} 项"
+    }
+
+    private fun exitSelection() {
+        selectionMode = false
+        selectedIds.clear()
+        KLog.d(TAG, "MARK selectionOff")
+        refresh()
+    }
+
+    private fun deleteSelected() {
+        if (selectedIds.isEmpty()) return
+        val n = selectedIds.size
+        undoIds.clear()
+        undoIds.addAll(selectedIds)
+        selectedIds.forEach { repo.softDelete(it) }
+        undoId = undoIds.first()
+        undoLabel = "$n 条便签"
+        undoVisible = true
+        val count = n
+        selectionMode = false
+        selectedIds.clear()
+        refresh()
+        say("已删除 $count 条")
+        KLog.d(TAG, "MARK bulkDeleted count=$count")
+        setTimeout(5000) { undoVisible = false }
     }
 
     private fun openEditor(id: String) {
@@ -212,9 +270,9 @@ internal class NotesPage : Pager() {
 
     private fun closeEditor() {
         editorRef?.view?.flush()
-        // Flush any pending debounced metadata update now.
-        if (metaSaveScheduled) {
-            metaSaveScheduled = false
+        // Flush pending metadata now (typing no longer persists per keystroke).
+        if (metaDirty) {
+            metaDirty = false
             repo.updateBodyMeta(editingId, pendingMetaLength, pendingMetaAt)
         }
         val n = repo.find(editingId)
@@ -268,24 +326,32 @@ internal class NotesPage : Pager() {
                 onDeleteTap(card)
             }
         }
+        if (pagerEvent == "selectTest") {
+            // Long-press selection: enter, select two, then bulk delete.
+            val list = repo.all().filter { !it.deleted }
+            if (list.isEmpty()) {
+                KLog.d(TAG, "MARK selectTest noNote")
+            } else {
+                enterSelection(list[0].id)
+                if (list.size > 1) toggleSelection(list[1].id)
+                deleteSelected()
+            }
+        }
     }
 
     private fun onMeta(length: Int, editedAt: Long) {
         countText = "$length 字"
         editedText = "刚刚"
         KLog.d(TAG, "MARK meta length=$length")
-        // Debounce metadata persistence: typing must not hit disk on every keystroke.
+        // Persist only on close. Creating a timer per keystroke used to pile up
+        // thousands of pending timeouts during long typing sessions.
         pendingMetaLength = length
         pendingMetaAt = editedAt
-        metaSaveScheduled = true
-        setTimeout(800) {
-            if (!metaSaveScheduled) return@setTimeout
-            metaSaveScheduled = false
-            repo.updateBodyMeta(editingId, pendingMetaLength, pendingMetaAt)
-        }
+        metaDirty = true
     }
 
     private fun switchTab(i: Int) {
+        if (selectionMode) { selectionMode = false; selectedIds.clear() }
         tab = i
         folderIdx = 0
         tagFilter = NoteRepository.ALL_TAG
@@ -377,8 +443,25 @@ internal class NotesPage : Pager() {
                         }
                         View {
                             attr { flex(1f); flexDirectionColumn() }
-                            Text { attr { text(ctx.headText); fontSize(22f); fontWeightBold(); color(if (ctx.dark) DARK_INK else INK) } }
-                            Text { attr { text(ctx.subText); fontSize(10f); color(MUTED); marginTop(3f) } }
+                            Text {
+                                attr {
+                                    text(if (ctx.selectionMode) ctx.selectionTitle else ctx.headText)
+                                    fontSize(22f); fontWeightBold(); color(if (ctx.dark) DARK_INK else INK)
+                                }
+                            }
+                            Text {
+                                attr {
+                                    text(if (ctx.selectionMode) "长按卡片可多选" else ctx.subText)
+                                    fontSize(10f); color(MUTED); marginTop(3f)
+                                }
+                            }
+                        }
+                        if (ctx.selectionMode) {
+                            View {
+                                attr { height(34f); padding(left = 12f, right = 12f); borderRadius(11f); backgroundColor(if (ctx.dark) DARK_CARD else PAPER); allCenter() }
+                                event { click { ctx.exitSelection() } }
+                                Text { attr { text("完成"); fontSize(12f); color(ACCENT) } }
+                            }
                         }
                         View {
                             attr { size(34f, 34f); borderRadius(11f); backgroundColor(if (ctx.dark) DARK_CARD else PAPER); allCenter() }
@@ -502,13 +585,39 @@ internal class NotesPage : Pager() {
                         }
                     }
 
-                    View {
-                        attr {
-                            absolutePosition(bottom = 82f, right = 18f)
-                            size(52f, 52f); borderRadius(17f); backgroundColor(ACCENT); allCenter()
+                    // Selection action bar replaces the FAB while selecting.
+                    if (ctx.selectionMode) {
+                        View {
+                            attr {
+                                absolutePosition(bottom = 78f, left = 16f, right = 16f)
+                                height(52f); borderRadius(16f)
+                                backgroundColor(if (ctx.dark) DARK_CARD else PAPER)
+                                flexDirectionRow(); allCenter()
+                                padding(left = 16f, right = 10f)
+                            }
+                            Text { attr { text(ctx.selectionTitle); fontSize(13f); fontWeightBold(); color(if (ctx.dark) DARK_INK else INK); flex(1f) } }
+                            View {
+                                attr { height(36f); padding(left = 14f, right = 14f); borderRadius(11f); backgroundColor(ACCENT_SOFT); allCenter() }
+                                event { click { ctx.exitSelection() } }
+                                Text { attr { text("取消"); fontSize(12f); color(INK2) } }
+                            }
+                            View {
+                                attr { height(36f); marginLeft(8f); padding(left = 14f, right = 14f); borderRadius(11f); backgroundColor(DANGER); allCenter() }
+                                event { click { ctx.deleteSelected() } }
+                                Text { attr { text("删除"); fontSize(12f); color(PAPER) } }
+                            }
                         }
-                        event { click { ctx.createNote() } }
-                        Text { attr { text("＋"); fontSize(24f); color(PAPER) } }
+                    }
+
+                    if (!ctx.selectionMode) {
+                        View {
+                            attr {
+                                absolutePosition(bottom = 82f, right = 18f)
+                                size(52f, 52f); borderRadius(17f); backgroundColor(ACCENT); allCenter()
+                            }
+                            event { click { ctx.createNote() } }
+                            Text { attr { text("＋"); fontSize(24f); color(PAPER) } }
+                        }
                     }
 
                     // Bottom segmented tab
@@ -605,7 +714,7 @@ internal class NotesPage : Pager() {
                         }
                         event {
                             onMeta { len, at -> ctx.onMeta(len, at) }
-                            onReady { ctx.say("编辑器就绪") }
+                            onReady { }
                         }
                     }
                 }
@@ -680,7 +789,14 @@ internal class NotesPage : Pager() {
             event {
                 click {
                     val blocked = nowMillis() < ctx.suppressCardClickUntil
-                    if (!blocked && !c.trashed) ctx.openEditor(c.id)
+                    if (!blocked && c.id != "__empty__") {
+                        if (ctx.selectionMode) ctx.toggleSelection(c.id) else ctx.openEditor(c.id)
+                    }
+                }
+                longPress {
+                    if (it.state == "start" && c.id != "__empty__" && !ctx.selectionMode) {
+                        ctx.enterSelection(c.id)
+                    }
                 }
             }
             View {
@@ -708,7 +824,17 @@ internal class NotesPage : Pager() {
                 View {
                     attr { flexDirectionRow(); marginTop(7f); allCenter() }
                     Text { attr { text(c.meta); fontSize(9f); color(MUTED); flex(1f) } }
-                    if (c.trashed) {
+                    if (ctx.selectionMode) {
+                        // Check mark: filled when selected.
+                        View {
+                            attr {
+                                size(22f, 22f); borderRadius(11f)
+                                backgroundColor(if (c.selected) ACCENT else ACCENT_SOFT)
+                                allCenter()
+                            }
+                            if (c.selected) { Text { attr { text("✓"); fontSize(12f); color(PAPER) } } }
+                        }
+                    } else if (c.trashed) {
                         View {
                             attr { size(30f, 26f); borderRadius(9f); backgroundColor(ACCENT_SOFT); allCenter() }
                             event { click { ctx.repo.restore(c.id); ctx.refresh(); ctx.say("已恢复") } }
@@ -718,19 +844,6 @@ internal class NotesPage : Pager() {
                             attr { size(30f, 26f); marginLeft(6f); borderRadius(9f); backgroundColor(ACCENT_SOFT); allCenter() }
                             event { click { ctx.repo.purge(c.id); ctx.refresh(); ctx.say("已彻底删除") } }
                             Text { attr { text("✕"); fontSize(12f); color(DANGER) } }
-                        }
-                    } else if (c.pendingDelete) {
-                        // Armed: the second tap is what actually deletes.
-                        View {
-                            attr { height(26f); padding(left = 8f, right = 8f); borderRadius(9f); backgroundColor(DANGER); allCenter() }
-                            event { click { ctx.onDeleteTap(c) } }
-                            Text { attr { text("确定删除"); fontSize(10f); color(PAPER) } }
-                        }
-                    } else {
-                        View {
-                            attr { size(30f, 26f); borderRadius(9f); backgroundColor(ACCENT_SOFT); allCenter() }
-                            event { click { ctx.onDeleteTap(c) } }
-                            Text { attr { text("×"); fontSize(13f); color(MUTED) } }
                         }
                     }
                 }
@@ -749,14 +862,24 @@ internal class NotesPage : Pager() {
                 backgroundColor(if (ctx.dark) DARK_CARD else PAPER)
                 allCenter()
             }
-            event { click { ctx.repo.toggleDone(c.id); ctx.refresh() } }
+            event {
+                click {
+                    if (ctx.selectionMode) ctx.toggleSelection(c.id)
+                    else if (nowMillis() >= ctx.suppressCardClickUntil) {
+                        ctx.repo.toggleDone(c.id); ctx.refresh()
+                    }
+                }
+                longPress {
+                    if (it.state == "start" && !ctx.selectionMode) ctx.enterSelection(c.id)
+                }
+            }
             View {
                 attr {
                     size(19f, 19f); borderRadius(7f)
-                    backgroundColor(if (c.done) ACCENT else ACCENT_SOFT)
+                    backgroundColor(if (c.done || c.selected) ACCENT else ACCENT_SOFT)
                     allCenter()
                 }
-                if (c.done) { Text { attr { text("✓"); fontSize(11f); color(PAPER) } } }
+                if (c.done || c.selected) { Text { attr { text("✓"); fontSize(11f); color(PAPER) } } }
             }
             Text {
                 attr {

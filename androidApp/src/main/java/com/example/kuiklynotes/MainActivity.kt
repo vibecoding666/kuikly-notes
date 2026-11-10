@@ -36,12 +36,14 @@ class MainActivity : Activity() {
         val tabIdx = intent?.getIntExtra("tab", -1) ?: -1
         val openMenu = intent?.getIntExtra("menu", 0) ?: 0
         val deleteTest = intent?.getStringExtra("delete_test")
-        if (stress > 0 || tabIdx >= 0 || openMenu > 0 || deleteTest != null) {
+        val selectTest = intent?.getStringExtra("select_test")
+        if (stress > 0 || tabIdx >= 0 || openMenu > 0 || deleteTest != null || selectTest != null) {
             container.postDelayed({
                 if (stress > 0) delegator?.sendEvent("stress", mapOf("chars" to stress))
                 if (tabIdx >= 0) delegator?.sendEvent("switchTab", mapOf("tab" to tabIdx))
                 if (openMenu > 0) delegator?.sendEvent("openMenu", mapOf())
                 if (deleteTest != null) delegator?.sendEvent("deleteTest", mapOf())
+                if (selectTest != null) delegator?.sendEvent("selectTest", mapOf())
             }, 2500)
         }
     }

@@ -9,6 +9,7 @@ import android.text.TextWatcher
 import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.MotionEvent
 import android.widget.EditText
 import com.tencent.kuikly.core.render.android.export.IKuiklyRenderViewExport
 import com.tencent.kuikly.core.render.android.export.KuiklyRenderCallback
@@ -86,6 +87,29 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
         } else {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         }
+    }
+
+    /**
+     * Kuikly's container installs its own gesture detector which happily steals
+     * MOVE events. Without this, scrolling the body only ever moves a few pixels
+     * per gesture ("one line at a time"), because the parent intercepts the rest.
+     */
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                // Take the gesture: the body must scroll itself, not the page.
+                parent?.requestDisallowInterceptTouchEvent(true)
+            }
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                parent?.requestDisallowInterceptTouchEvent(false)
+            }
+        }
+        return super.dispatchTouchEvent(event)
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        parent?.requestDisallowInterceptTouchEvent(true)
+        return super.onTouchEvent(event)
     }
 
     override fun setProp(propKey: String, propValue: Any): Boolean {
