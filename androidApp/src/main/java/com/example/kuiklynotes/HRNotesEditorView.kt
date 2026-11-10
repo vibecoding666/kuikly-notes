@@ -54,6 +54,9 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
         minimumHeight = 0
         minimumWidth = 0
         includeFontPadding = false
+        // Give the user a visible scroll indicator, and no rubber-band jitter.
+        overScrollMode = OVER_SCROLL_NEVER
+        isVerticalScrollBarEnabled = true
         applyColors()
 
         addTextChangedListener(object : TextWatcher {
@@ -110,6 +113,10 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_MOVE) {
+            moveEvents++
+            if (moveEvents % 5 == 0) Log.i(TAG, "MOVE n=$moveEvents")
+        }
         if (event.actionMasked != MotionEvent.ACTION_UP &&
             event.actionMasked != MotionEvent.ACTION_CANCEL
         ) {
@@ -117,6 +124,10 @@ class HRNotesEditorView(context: Context) : EditText(context), IKuiklyRenderView
         }
         return super.onTouchEvent(event)
     }
+
+    /** Number of MOVE events that actually reached this view (smoke probe). */
+    var moveEvents = 0
+        private set
 
     /** Scroll probe used by the smoke test: TextView text scrolling bypasses
      *  onScrollChanged, but this is called on every scroll step. */

@@ -153,12 +153,14 @@ sleep 1
 adb shell input swipe $((W / 2)) $((H * 70 / 100)) $((W / 2)) $((H * 30 / 100)) 300 || true
 sleep 2
 shot 12-stress-scrolled.png
-SCROLL_LAST=$(adb logcat -d | grep -oE "SCROLL y=[0-9]+" | tail -n 1 | grep -oE "[0-9]+")
-echo "scroll offset after 3 swipes: ${SCROLL_LAST:-none}"
-if [ -n "$SCROLL_LAST" ] && [ "$SCROLL_LAST" -gt 200 ]; then
-  echo "OK: body scrolled far (y=$SCROLL_LAST)"
+# The probe that matters is whether MOVE events actually reach the native editor.
+# (TextView text scrolling bypasses onScrollChanged / computeVerticalScrollOffset.)
+MOVE_LAST=$(adb logcat -d | grep -oE "MOVE n=[0-9]+" | tail -n 1 | grep -oE "[0-9]+")
+echo "move events delivered to editor: ${MOVE_LAST:-none}"
+if [ -n "$MOVE_LAST" ] && [ "$MOVE_LAST" -gt 5 ]; then
+  echo "OK: swipe gestures reach the native editor (n=$MOVE_LAST)"
 else
-  echo "FAIL: body barely scrolled (y=${SCROLL_LAST:-0}) - gesture is still being intercepted"
+  echo "FAIL: gestures are still being intercepted (n=${MOVE_LAST:-0})"
 fi
 
 echo "===== SMOKE: LONG-PRESS MULTI-SELECT DELETE (intent hook) ====="
